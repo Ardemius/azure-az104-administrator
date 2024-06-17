@@ -1,0 +1,820 @@
+= Microsoft Azure Administrator Associate AZ-104
+Thomas SCHWENDER <icon:github[] https://github.com/Ardemius/[GitHub] / icon:twitter[role="aqua"] https://twitter.com/thomasschwender[@thomasschwender]>
+// Handling GitHub admonition blocks icons
+ifndef::env-github[:icons: font]
+ifdef::env-github[]
+:status:
+:outfilesuffix: .adoc
+:caution-caption: :fire:
+:important-caption: :exclamation:
+:note-caption: :paperclip:
+:tip-caption: :bulb:
+:warning-caption: :warning:
+endif::[]
+:imagesdir: ./images
+:resourcesdir: ./resources
+:source-highlighter: highlightjs
+:highlightjs-languages: asciidoc
+// We must enable experimental attribute to display Keyboard, button, and menu macros
+:experimental:
+// Next 2 ones are to handle line breaks in some particular elements (list, footnotes, etc.)
+:lb: pass:[<br> +]
+:sb: pass:[<br>]
+// check https://github.com/Ardemius/personal-wiki/wiki/AsciiDoctor-tips for tips on table of content in GitHub
+:toc: macro
+:toclevels: 4
+// To number the sections of the table of contents
+//:sectnums:
+// Add an anchor with hyperlink before the section title
+:sectanchors:
+// To turn off figure caption labels and numbers
+:figure-caption!:
+// Same for examples
+//:example-caption!:
+// To turn off ALL captions
+// :caption:
+
+toc::[]
+
+== Examen et ressources de préparation
+
+Microsoft AZ-104 examen : https://learn.microsoft.com/en-us/certifications/exams/az-104/
+
+Exam plan : 
+
+    * Manage Azure identities and governance (20-25%)
+    * Implement and manage storage (15-20%)
+    * Deploy and manage Azure compute resources (20-25%)
+    * Implement and manage virtual networking (15-20%)
+    * Monitor and maintain Azure resources (10-15%)
+
+Déroulement de la certification :
+
+    * Exam Duration 120 mins
+    * Number of Questions 40-60 Questions
+    * Pass Score 700 (on a scale of 1-1000)
+
+Description précise des connaissances à posséder pour la certification par Microsoft : +
+https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4pCWy
+
+[NOTE]
+==== 
+Pour plus d'informations sur la certification AZ-104 (nombre de questions, passing score, etc.), voir la description faite par *testprep training* : +
+https://www.testpreptraining.com/microsoft-azure-administrator-associate-az-104
+
+Le site propose également un *AZ-104 Online Tutorial* : https://www.testpreptraining.com/tutorial/exam-az-104-microsoft-azure-administrator-associate/
+====
+
+[NOTE]
+====
+Pour un *poster des certifications Microsoft*, très régulièrement mis à jour, voir https://aka.ms/certificationsposter
+====
+
+== Cours de PHILIT sur l'AZ-104 et l'AZ-305
+
+De mon côté, je vais commencer par suivre les cours en ligne de PHILIT : https://www.youtube.com/playlist?list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT +
+-> Il s'agit en fait de Philippe PAIOLA (philippe.paiola@gmail.com)
+
+[TIP]
+====
+Philippe fait partie du Club Azure Insiders et poste régulièrement sur le Teams associé 😉
+
+-> Et pour ce que j'en vois, Philippe doit maintenant faire partie de Microsoft, il a une adresse interne : philippe.paiola@microsoft.com
+====
+
+Ressources conseillées par PHILIT pour se préparer à la certification : 
+
+    * La *documentation Microsoft Learn* : https://docs.microsoft.com/fr-FR/learn/certifications/roles/administrator
+        ** Parcours de formation Microsoft Learn AZ-104 Microsoft Azure Administrator : +
+        https://learn.microsoft.com/fr-FR/credentials/certifications/exams/az-104/
+
+    * Le blog de Thomas MAURER : https://www.thomasmaurer.ch/2020/03/az-104-study-guide-azure-administrator/
+
+=== Certification AZ-104 EP01 : Azure AD (AAD) & VNet
+
+URL vidéo PHILIT : https://www.youtube.com/watch?v=JoGL_Q7ihG8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
+
+==== Identité et ADD
+
+* les identités sont stockées dans l'*Azure Active Directory* (*AAD*) : ce service va permettre de gérer nos identités Cloud
+
+* 3 formes d'identité : 
+
+    ** *Identité membre* (ou Cloud Native) : elle est issue de notre instance de l'AAD 
+        
+        *** Rappel : *instance de l'AAD = tenant*.
+
+            **** 1 *tenant* est une *instance de l'AAD* qui est dédiée à un client.
+            **** Chaque client de Microsoft a 1 tenant qui lui est dédié et qui est unique. +
+            -> 2 clients ne peuvent pas avoir le même tenant
+            **** Ce tenant est souvent représenté par un nom de domaine qui correspond souvent au nom du client. +
+            Exemple : "laposte.onmicrosoft.com" ou "toto.onmicrosoft.com"
+        
+        *** Donc, l'identité va être de type "user@toto.onmicrosoft.com"
+
+    ** *Identité synchronisée* : elle est issue de votre AD on-premises (ce dernier est souvent représenté par un triangle)
+        *** cet AD on-premises est bien souvent au nom de la société : toto.com
+        *** cet AD va contenir : 
+            **** des DC : Domain Controller / contrôleurs de domaines
+                ***** un DC est une version server de notre système d'exploitation (OS). +
+                Donc Windows server 2016 / 2019 peut devenir un contrôleur de domaine en ajoutant le rôle.
+            **** des groupes
+            **** des ordinateurs
+
+        *** un utilisateur va ici être "user@toto.com"
+            **** donc cela peut être notre email professionnel
+
+        *** On se retrouve avec un Domain Active Directory qui va avoir plusieurs DC
+            
+            **** On va créer une VM sur l'AD, et sur cette VM on va installer le produit *AAD Connect* (Azure AD Connect). +
+            Le but de AAD Connect va être de se connecter à mon DC, de récupérer la liste des users et des groupes, et de transférer ces users et groupes dans votre tenant AAD. +
+            image:AZ-104_AAD-VNet_01.jpg[]
+
+            **** Et pour permettre que ces identités on-premises soient bien synchronisées sur l'AAD, je vais aller dans le portail Azure, dans l'AAD, et dans *Custom domain names* je vais rajouter le nom de domaine "toto.com" (le nom de domain venant du on-premises)
+
+    ** *Identité Guest* : un "invité" est un utilisateur qui vient d'un autre tenant
+        *** "qui vient d'un autre tenant" : attention à cette expression, d'après mes recherches, cela *peut tout simplement être un utilisateur externe* qui n'a encore aucun compte sur un AD ou AAD.
+        *** Exemple d'un prestataire d'ESN qui va être embauché pour travailler avec le tenant de la société toto.com. +
+        Pour que cela se fasse, il va avoir besoin d'une *invitation* : une personne chez toto.com va devoir inviter l'utilisateur à se joindre au tenant de toto.onmicrosoft.com, ce qui va lui permettre d'avoir accès à un abonnement (subscription)
+
+.Pour résumer sur les identités
+[NOTE]
+====
+* Le *tenant* est la *représentation des identités d'une entreprise dans le Cloud Azure*
+* Ce tenant est livré en "xxx.onmicrosoft.com"
+* Dans ce tenant, on va retrouver 3 types d'identités : membre / identité synchronisée / Guest
+
+
+* Un tenant va toujours être rattaché à 1 ou plusieurs abonnements / subscriptions
+    ** L'abonnement / subscription est ce qui va contenir nos ressources Cloud : VMs, BDDs, storage account, IA, etc.
+    ** Cet abonnement / subscription est une frontière d'administration et de facturation des ressources Cloud de la société
+    ** Pour *accéder à ces ressources*, on va avoir besoin d'un *système d'identités*, et ce dernier c'est le *tenant Azure Active Directory*
+* Un abonnement / subscription Azure a toujours une référence à un tenant.
+* Et ce tenant contient des identités qui permettront, via l'Access Control (IAM) de donner des droits à des utilisateurs ou à des groupes.
+* Et ces utilisateurs sont soit membre (cloud natif), soit synchronisé, soit invité (guest).
+====
+
+WARNING: Un utilisateur qui est dans mon tenant n'a, par défaut, aucun accès sur mes ressources Azure
+
+.Tenant vs Directory vs Domain in AAD
+[NOTE]
+====
+FAIRE VRAIMENT TRES ATTENTION, on trouve souvent de très mauvaises explications des relations entre ces 3 concepts, surtout entre tenant et directory. +
+-> Certaines sont mêmes tout simplement fausses, alors même qu'elles sont données par un IT de Microsoft... 😓
+
+Néanmoins, voici un post de 2020/08 d'un IT de Microsoft sur les forums tech de Microsoft qui répond bien et précisément à la question : +
+https://techcommunity.microsoft.com/t5/azure/relationship-between-azure-active-directory-and-directory-tenant/m-p/1607755/highlight/true#M5873 
+
+--
+I understand your confusion. I agree there are several "terms" in Azure that seem to overlap or could be synonyms. In addition, you might see these terms used inconsistently in the Portal UI or documentation.
+
+I always try to approach it from the practical point of view, for example:
+
+    * Can I create a new Azure AD tenant and if yes, how is it related to my existing environment?
+    * Can I create several directories under that tenant?
+    * Can I have several domains under my tenant?
+
+I like to use this article written for AAD developers as a reference: https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-create-new-tenant#use-an-...
+
+I saw some confusing or even wrong replies in the "linked" topic like someone claiming you can have several directories under one AAD tenant.
+
+I see it this way : *Azure AD tenant = directory*, and *there is a strict 1:1 relationship between them* (you cannot create several directories under a tenant). Each tenant has it's globally unique '*tenant ID*' (in some places in the Portal referred as '*directory ID*', but *the ID is the same*)
+
+*When you use 'Switch directories'* option in the Portal, *you are authenticating to a different AAD tenant* (your account was invited as a guest there via Azure AD B2B Collaboration), so you will see different subscriptions and resources, and have different permissions, when you do so. Since most organizations have one production tenant (but some like ISVs can have more), you are switching to a different "company". That's how I see it.
+
+You can, however, have several domains under one tenant / directory. You always get a default one {something}.onmicrosoft.com, but you can onboard custom domains (like contoso.com) upon proving you own that domain.
+--
+
+-> J'ai demandé des précisions à Microsoft sur ce point via les Q&A de Microsoft Learn : +
+https://learn.microsoft.com/en-us/answers/questions/1457968/help-me-to-understand-the-concepts-of-tenant-direc
+====
+
+* Création d'un *custom role*
+    ** le *scope* est vraiment la *portée* du rôle
+    ** le rôle est représenté par un fichier JSON
+
+[WARNING]
+====
+La maintenance d'un *custom role* est réputée compliquée. +
+-> Contrairement à un *built-in role*, les custom role ne sont PAS mis à jour automatiquement lors des mises à jour des services.
+====
+
+* Les utilisateurs d'un tenant peuvent avoir des rôles RBAC sur les ressources Azure *ET* sur le tenant lui-même. +
+Donc au final sur *Azure*, il y a *2 types de rôles* : ceux *sur le tenant*, et ceux *sur vos ressources Azure* : 
+
+    ** *rôles dit "RBAC"* -> rôles sur vos ressources Azure
+
+    ** *rôles sur le tenant* -> rôles qui vous permettent de gérer vos identités
+        *** exemple : "Billing administrator" pour gérer la facturation des logiciels, des licences que vous avez installés sur votre tenant
+
+NOTE: On peut ajouter des licences à un tenant pour lui ajouter des fonctionnalités supplémentaires
+
+* L'*Azure Active Directory* sert également à la *publication de vos applications*.
+    ** voir https://myapps.microsoft.com/[] pour visualiser les applications publiées sur votre tenant
+
+* Les *applications publiées dans le tenant*, pour qu'elles fonctionnent et soient trustées par le tenant et vos utilisateurs, *doivent être inscrites dans le tenant*.
+    ** Pour ce faire, on passe par le Portail Azure, "Azure AD / Enterprise applications / All applications", puis "create your own application"
+    ** Pour cette inscription dans le tenant, Azure va créer un *compte de service* qui représente cette application, ce dernier est appelé *service principal*.
+        *** Le service principal est un compte d'application qui représente votre application dans le tenant.
+        *** Le service principal est un compte managé par Microsoft : il a une durée de vie, un certificat associé, et va permettre, quand vous publiez une application, de la rendre disponible à vos utilisateurs.
+
+* Auparavant, pour *accéder à un AD on-premises*, on utilisait le protocole *LDAP*. +
+Et pour *s'authentifier à cet AD on-premises*, il y avait 2 moyens : 
+    ** utiliser le protocole *Kerberos*
+    ** utiliser le protocole *NTLM* (un vieux protocol d'authentification apparu avec Windows NT ou Windows 2000)
+
+    ** -> Ces 2 méthodes d'authentification permettaient via des requêtes LDAP d'accéder à votre AD on-premises.
+
+* Aucun de ces protocols, LDAP, Kerberos ou NTLM n'est utilisé dans l'Azure AD.
+* Pour pouvoir accéder à l'Azure AD, pour pouvoir vous y connecter, vous allez au préalable passer par du HTTPS. +
+Puis, une fois connecté, vous allez pouvoir utiliser l'un des protocoles suivants pour pouvoir interroger l'Azure AD :  
+    ** SAML
+    ** WS Federation
+    ** OAuth 2.0 et OpenID Connect
+
+* Je vais également pouvoir déléguer l'authentification de mes utilisateurs à des tiers comme Google, Facebook, ou utiliser le protocole SAML / WS-fed
+    ** Pour faire, aller dans son tenant, dans "external identities" puis "all identity providers"
+* Donc il ne faut pas croire que le tenant AAD va permettre de gérer tous les cas de figures, on peut *déléguer l'authentification de certains types d'utilisateurs pour certaines applications à des fournisseurs d'identités externes*.
+    ** C'est très utile lors de la création d'une *web app* qui a *par défaut* un *accès anonyme* : n'importe qui connaissant son IP publique ou son nom de domaine peut y accéder. Avec ce système, on va pouvoir rajouter une surcouche d'authentification à la web app pour lui permettre d'être authentifiée par des utilisateurs particuliers
+
+* *DEMO* de la création de cette *surcouche d'authentification pour une Web app* : https://youtu.be/JoGL_Q7ihG8?t=3069[] 
++
+video::JoGL_Q7ihG8?t=3069[youtube, width=800, height=600]
+
+    ** Pour ce faire, on va utiliser un service principal qui va représenter cette web app dans l'Azure AD
+    ** Création d'une *web app* : 1 à 2 min et *par défaut elle va avoir un accès public*
+
+.Rappel sur les web apps
+[NOTE]
+====
+Une web app est un service web (une application web ou un site web) qui est hébergé ET managé par Microsoft. +
+La logique est de ne PAS avoir à gérer le système d'exploitation. +
+On peut faire du SSH dessus ou utiliser des commandes PowerShell, mais cela a lieu dans un environnement très cloisonné et très fermé.
+
+Et comme tout service Azure PaaS, *par défaut*, la *web app* a une *IP publique* et un *nom de domaine* qui lui sont associés.
+====
+
+    ** Pour "casser" cette logique d'accès anonyme à la web app, dans la web app, dans "authentication", je vais rajouter un fournisseur d'identité ("add identity provider") : je veux que ceux qui accèdent à ma web app aient un compte dans mon tenant.
+    ** Et je vais choisir "require authentication" plutôt que "allow unauthenticated access"
+
+==== VNet, subnet, NIC, NSG
+
+.VNet, subnet, NIC, VM, NSG
+image:AZ-104_AAD-VNet_02.jpg[]
+
+* VNet = espace d'adressage, voir RFC 1918 "Adress Allocation for Private Internets" : https://datatracker.ietf.org/doc/html/rfc1918[]
+    ** Cette RFC définit 3 espaces d'adressage (plages d'adresses) qui ne sont pas accessibles directement depuis Internet, des adressages dits *"non routables"* ; aucun serveur sur Internet ne peut utiliser ces adresses, qu'on appelle également des *adresses IP privées* : 
+        *** 192.168
+        *** 10.0
+        *** 172.16
+    ** Par défaut, 2 VNets (par exemple, un en 192.168 et un en 10.0) ne peuvent PAS communiquer ensemble. +
+    Les subnets de ces VNets ne pourront pas communiquer ensemble.
+
+* Un même VNet peut contenir ces 3 espaces d'adressage, il n'est PAS limité à 1 seul
+
+* Un VNet va être compartimenté en 1 ou plusieurs *subnets* (sous-réseaux), comme un pizza que l'on couperait en morceaux avant de la manger
+    ** *On ne peut PAS prendre les 3 premières IP d'un subnet*, car réservées par Microsoft à la gestion DNS et la gestion des passerelles. +
+    Toute la couche réseau et toute la couche IPAM dans Azure est dévolu à Microsoft
+        *** Exemple : si mon subnet est en 10.0.0.0/24, je ne pourrais pas utiliser les IP 10.0.0.1, 10.0.0.2, 10.0.0.3. +
+        Donc, ma NIC, si c'est la 1ere du subnet, sera en 10.0.0.4
+    ** Dans les faits, les IPs 0 et 255 sont également réservées par Microsoft : 
+        *** la *"0"* (10.0.0.0 dans l'exemple précédent) est l'*adresse de réseau* : c'est l'adresse IP de base du subnet qui est utilisée pour l'identifier.
+        *** la *"255"* est l'IP de broadcast (Network broadcast address) : elle est utilisée pour envoyer des paquets à tous les appareils du sous-réseau
+    
+* A tout moment, *on peut changer l'espace d'adressage d'un VNet*
+    ** mais on ne peut pas réduire la taille d'un VNet en-dessous de la taille d'un de ses subnets
+* On ne peut modifier la taille d'un subnet qu'AVANT de lui avoir ajouté une ressource (comme une NIC), cela devient impossible après
+    ** et la modification d'un subnet ne peut se faire qu'en respectant la limite de taille du VNet
+
+* Dans un Subnet, on va souvent retrouver une *NIC* (*Network Interface Card*). +
+Une NIC est une carte réseau qui va contenir : 
+    ** *obligatoirement* une *IP privée*
+        *** Les adressages IP privés sur Azure sont toujours *gratuites*
+    ** *facultativement* une *IP publique*
+        *** Les adressages IP publiques sont payantes (de l'ordre de 1€ par mois à vérifier)
+
+    ** ces 2 IPs peuvent être : 
+        *** *dynamique* : elle risque de changer à chaque redémarrage de la VM
+        *** *statique*
+
+* Cette NIC va souvent être associée à une VM, et une VM doit TOUJOURS avoir une NIC : *une VM Azure sans NIC, cela n'existe pas*
+    ** Donc une VM dans Azure a toujours une IP privée, mais pas systématiquement une IP publique
+
+TIP: Donc, cf explication précédente, si on trouve une NIC dans un subnet, on ne peut donc plus modifier la taille de ce subnet
+
+* Les *subnets* peuvent *par défaut communiquer en entrant et en sortant entre eux*.
+    ** Ces communications sont autorisées pour 2 raisons : 
+
+        *** les routes sont automatiquement propagées dans les subnets via un système appelé les *system routes* +
+        Les system routes : possibilité offerte par Azure de gérer les nouveaux subnets qui seraient créés dans votre VNet de façon à leur permettre de communiquer avec les autres subnets (propagation des routes automatisée)
+            **** ⚠️ Attention ! Les system routes gèrent *les subnet d'un MEME VNet*.
+            **** Voir la doc Microsoft sur les system routes : https://learn.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview#system-routes
+            **** Donc il y a des routes qui sont automatiquement gérées par Azure et que l'on ne peut PAS modifier
+
+        *** Entre les subnets, il n'y a PAS de firewall. Donc, si on veut filtrer les flux, il va falloir ajouter un *NSG* (*Network Security Group*)
+            **** *Le NSG est un firewall* qui va servir à filtrer les flux entrants et sortants.
+
+        *** Le NSG peut être attribué à une *NIC ET / OU à un subnet* (ou à plusieurs subnets) : 
+            **** *attribué à une NIC* : dans ce cas il va protéger l'IP privée et l'IP publique de votre VM
+            **** *attribué à un subnet* : il va alors filtrer les communications entre les différents subnets et entre les subnets et les réseaux distants (que ce soit Internet, ou une liaison VPN, ou une ExpressRoute)
+            **** En l'absence de NSG associée à la carte réseau / NIC de ma VM, cette dernière devra être protégée par le firewall de l'OS (Windows avec les pare-feu fonctions avancées, ou Linux avec IPTables)
+        
+        *** Seule limitation du NSG : il doit être dans la même région que les ressources à protéger. +
+        Pour un VNet en North Europe, il faut obligatoirement créer un NSG en North Europe pour le protéger
+
+* Dans la section "Virtual Network" du portal Azure, il est possible de faire *générer un diagramme réseau du VNet* via le menu *"Diagram"* : +
+image:AZ-104_AAD-VNet_03.jpg[]
+    ** Dans le diagramme donné en exemple, on peut voir que : 
+        *** le VNet a 3 subnets
+        *** que le subnet "Production" a une NIC
+        *** que cette NIC est rattachée à une VM, à une IP publique et à un NSG
+
+.Toujours une NIC "primary" pour une VM
+[NOTE]
+====
+Toute VM Azure a obligatoirement une NIC "primary" : +
+image:AZ-104_AAD-VNet_04.jpg[]
+
+Cela parce qu'une VM peut avoir plusieurs NIC, et donc autant d'adresses IP différentes. +
+Mais même si une VM a 200 NICs, et donc 200 IPs différentes, il y aura toujours une NIC "primary"
+
+Cette NIC primary va surtout *servir pour tout ce qui est routage*, pour *"avoir le dernier mot"*.
+====
+
+* "Bon à savoir" de Philippe : même si on laisse l'IP publique d'une VM en dynamique (donc changement à chaque arrêt / redémarrage), on peut y associer un DNS géré par Microsoft pour pouvoir toujours y accéder via un même nom DNS.
+
+* Les *NSG* sont dotés de *règles de filtrage par défaut*, *classées par priorité* et que l'*on ne peut pas supprimer* : 
+
+    ** *Flux entrants* : 
+        *** prio 65000 - "AllowVnetInBound" : toutes les communications au sein d'un VNet entre les subnets sont autorisées
+        *** prio 65001 - "AllowAzureLoadBalancerInBound" : un load balancer Azure doit pouvoir accéder aux VMs qui sont dans un subnet (logique, c'est le principe d'un load balancer)
+        *** prio 65500 - "DenyAllInBound" : "on refuse tout"
+
+    ** -> On peut pas supprimer ces règles MAIS on peut en créer d'autres avec une plus forte priorité (priorité plus forte = nombre plus petit)
+
+    ** *Flux sortants* : 
+        *** On retrouve 2 règles similaires aux flux entrants : "AllowVnetOutBound" et "DenyAllOutBound"
+        *** et 1 nouvelle règle "AllowInternetOutbound" en prio 65001 : le trafic sortant sur une VM Azure est autorisé vers internet
+            **** Exemple : si on lance un navigateur sur une VM Azure et qu'on tape www.google.fr, on pourra s'y connecter via Internet
+
+.Effective Security Rules : Comment s'y retrouver parmi un trop grand nombre de règles NSG ? Qu'est-ce qui s'applique réellement au final ?
+[NOTE]
+====
+Dans votre NSG, vous avez un menu *"Effective security rules"* correspondant à une fonctionnalité d'Azure qui va "réfléchir pour vous", en fonction des priorités des règles, du deny et du allow, à celles qui s'appliquent réellement au final. +
+Celles-ci seront fournies sont forme de tableau.
+====
+
+* Le menu *"NSG Flow logs"* de votre NSG vous permet de visualiser à tout moment les logs de ses flux entrant et sortant.
+    ** Cela nécessite de mapper son NSG à un storage account et de définir une rétention pour les logs
++
+WARNING: Par défaut, rien n'est conservé, c'est à nous d'activer et de configurer ces logs
+
+=== Certification AZ-104 EP02 : Hub & Spoke et Azure Backup
+
+URL vidéo PHILIT : https://www.youtube.com/watch?v=EbZLEcDVF8g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
+
+==== Hub & spoke (peering, UDR, NVA...)
+
+Rappel : Par défaut, 2 VNets (par exemple, un en 192.168 et un en 10.0) ne peuvent PAS communiquer ensemble. +
+image:AZ-104_Hub-Spoke-backup_01.jpg[] +
+(Dans l'exemple du schéma, chaque VNet n'a qu'un seul subnet, qui occupe tout l'espace d'adressage du VNet)
+
+* Si je veux permettre la communication entre ces VNets, je vais avoir 2 options : 
+
+    ** le *peering* : beaucoup d'avantages pour cette solution, dont un faible coût et simple à mettre en oeuvre. +
+    Le peering consiste à raccorder entre eux les 2 VNets de façon à montrer à Azure qu'ils ne forment en fait qu'1 seul VNet "logique" (avec 2 subnets dans notre exemple)
+        *** Pour que cela fonctionne, il faut que *les espaces d'adressage des 2 VNets soient différents* / ne se chevauchent pas.
+
+    ** le *"VNet to VNet"* : dans cette solution, Azure va créer un *VPN site à site entre les 2 VNets*. +
+    Le protocole *IPSec* (Internet Protocol Security) va être utilisé par ce VPN pour assurer le chiffrement des flux qui circulent entre les 2 VNets.
+        *** Contrairement au peering, le VNet to VNet est cher, long à mettre en place, pas forcément très compliqué, mais c'est une techno qui "date un peu". +
+        -> Très souvent en entreprise, *on lui préfère le peering*.
+
+image:AZ-104_Hub-Spoke-backup_02.jpg[]
+    
+.En quoi la connectivité VNet to VNet est-elle plus chère que le peering ?
+[NOTE]
+====
+* *Moins de ressources réseau* :
+
+    ** Le *peering VNet* utilise l'*infrastructure dorsale Microsoft* (fait partie du réseau mondial Microsoft) pour établir une connexion directe entre les réseaux virtuels.
+    ** La *connectivité VNet à VNet*, en revanche, nécessite des *passerelles VPN virtuelles* et des *tunnels VPN* pour acheminer le trafic entre les réseaux virtuels. Cela implique une utilisation accrue des ressources réseau, ce qui se traduit par des coûts plus élevés.
+
+* *Pas de frais de transfert de données* :
+
+    ** Le peering VNet ne facture pas de frais de transfert de données pour le trafic entre les réseaux virtuels pairs.
+    ** La connectivité VNet à VNet, en revanche, facture des frais de transfert de données pour le trafic transitant par les passerelles VPN.
+
+* *Facilité d'utilisation* : Le peering VNet est simple à configurer et à gérer, là où la connectivité VNet à VNet est plus complexe à mettre en place et à administrer, ce qui peut entraîner des coûts supplémentaires.
+====
+
+.Réseau mondial Microsoft et WAN Microsoft, Infrastructure dorsale et frontale
+[NOTE]
+====
+* *Réseau mondial Microsoft* :
+    ** Définition: Il s'agit de l'infrastructure physique et logicielle qui connecte les centres de données Microsoft à travers le monde.
+    ** Composants: Il inclut l'*infrastructure dorsale Microsoft*, les *centres de données*, les points de présence et les réseaux métropolitains.
+        
+        *** *Infrastructure dorsale* (Backhaul, le "cœur" du réseau) : Transporte les données sur de longues distances entre les centres de données, les points de présence et les réseaux métropolitains.
+        *** *Infrastructure frontale* (Fronthaul,  la "périphérie" du réseau) : Relie les utilisateurs finaux aux réseaux de communication, généralement sur la dernière portion du trajet.
+
+    ** Fonction: Il achemine le trafic entre les services Microsoft et les clients à travers le monde.
+
+* *WAN mondial Microsoft* (réseau étendu mondial Microsoft) :
+    ** Définition: Il s'agit d'un service Azure qui permet aux entreprises de créer et de gérer un réseau privé virtuel (VPN) mondial.
+    ** Composants: Il utilise le réseau mondial Microsoft comme infrastructure sous-jacente.
+    ** Fonction: Il permet aux entreprises de connecter leurs sites distants et leurs utilisateurs à leurs applications et données dans le cloud Azure.
+
+En résumé:
+
+    * Le réseau mondial Microsoft est l'infrastructure physique et logicielle qui permet aux services Microsoft de fonctionner.
+    * Le WAN mondial Microsoft est un service Azure qui utilise le réseau mondial Microsoft pour créer un VPN mondial pour les entreprises.
+====
+
+*PEERING* :
+
+image:AZ-104_Hub-Spoke-backup_03.jpg[]
+
+    * *Très facile à mettre en place* : le mettre en place entre 2 VNets prend *2 min*
+    * *Pas cher* : Microsoft va juste facturer la bande passante entre  les 2 VNets
+        ** et le *coût de la bande passante entre 2 VNets*, surtout dans une même région, n'est pas très élevé 0.01€ / Go pour de l'inbound ou outbound data transfer (voir https://azure.microsoft.com/en-us/pricing/details/virtual-network/ et https://azure.microsoft.com/en-us/pricing/details/bandwidth/)
+
+    * Peering regional : entre 2 VNets dans la même région
+    * Peering global : entre 2 VNets dans 2 régions différentes (donc le peering peut être *multi-région*)
+        ** coût plus élevé que le peering regional, voir les 2 liens précédents
+    
+    * Le peering est *multi-abonnement* (*multi-suscription*) : une entreprise possédant plusieurs souscriptions peut raccorder des VNets dans ces différentes souscriptions.
+    
+    * Le peering est *multi-tenant* : On va pouvoir *raccorder 2 VNets de 2 clients différents* (donc 2 clients différents vont pouvoir communiquer entre eux)
+        ** Rappel : 1 tenant représente les identités d'un client. +
+        Si on a 2 tenants, c'est qu'on est face à 2 clients différents
+        ** Pour faire ce raccordement multi-tenant, il faut avoir un compte autorisé dans les 2 tenants, il y a plusieurs manips à faire, MAIS c'est possible
+    
+    * Le peering utilise le *protocole MACsec* (Media Access Control security), et permet de *chiffrer les flux* traversant les équipements Microsoft
+        ** MAIS le chiffrement n'est *PAS activé par défaut*.
+        ** MACsec ne chiffre que les flux entre les deux VNets. Il ne chiffre pas les flux entre les VNets et Internet ou entre les VNets et d'autres réseaux.
++
+.Des détails sur le protocol MACsec
+[NOTE]
+====
+* MACsec uses a combination of *data integrity checks* and *encryption* to secure traffic traversing the link
+    ** Voir https://www.juniper.net/documentation/us/en/software/junos/security-services/topics/topic-map/understanding_media_access_control_security_qfx_ex.html[]
+
+* Media Access Control Security (MACsec) is a *layer2 security protocol* standardized by the IEEE that operates on Ethernet frames. It uses *AES GCM cryptography* with 128-bit key and 256-bit key versions. MACsec is designed to provide *authentication*, *confidentiality* and *integrity* for data transported on *point-to-point links in the enterprise Local Area Network (LAN)* using the Advanced Encryption Standard with Galois/Counter Mode (AES-GCM) data cryptography algorithm.
+    ** Voir https://www.comcores.com/what-is-macsec/
+====
+
+*DEMO : création de peering entre VNet Hub et VNet Spoke*
+ 
+image:AZ-104_Hub-Spoke-backup_06.jpg[width=700]
+
+    * on commence par créer les 2 VNets
+    * puis, sur l'un d'eux, on va dans "peerings", puis "add" pour ajouter un peering dans les 2 sens : VNet Hub vers VNet Spoke ET VNet Spoke vers VNet Hub
+
+    * Option "Traffic to remote virtual network" : doit toujours être activée, le trafic devant se faire dans les 2 sens. +
+    Si on bloque l'un des sens, le peering ne pourra PAS se faire (raison pour laquelle la valeur par défaut est "allow")
+
+    * Option "*Traffic forwarded* from remote virtual network"
+        ** Si j'ai créé 2 VNet spoke, tous 2 reliés à un même VNet hub, si mon hub reçoit un flux qui ne lui est pas destiné, MAIS qui est destiné à un VNet avec lequel il est peeré, *le hub va laisser passer le flux*.
+        ** Donc, dans le mon exemple, le trafic forwarding permet à VNet Hub, s'il reçoit un flux de VNet spoke à destination de VNet spoke 2, de le laisser passer : (flèche verte sur le schéma ci-dessous)
+        image:AZ-104_Hub-Spoke-backup_04.jpg[]
+
+    * Option "Virtual Network Gateway or Route Server" pour le *partage de la VNG* (Virtual Network Gateway) ou de l'ARS (Azure Route Server)
+        ** En tant que VNet Hub, si on a une liaison VPN site à site (S2S) avec son réseau on-premises, on va pouvoir partager cette liaison site à site avec ses VNets spoke. +
+        Un VNet spoke va donc pouvoir passer par le VNet hub pour accéder au réseau on-premises, et le réseau on-premises va pouvoir passer par le VNet hub pour accéder à un VNet spoke : +
+        image:AZ-104_Hub-Spoke-backup_05.jpg[]
+        ** Le partage de la VNG vous permet, en tant que hub, de partager votre connexion VPN avec vos spoke et votre réseau on-premises
+    
+        ** La VNG est la représentation de mon VPN dans Azure : c'est un VPN avec une IP publique qui est managé par Microsoft
+
+    * Les mêmes options sont disponibles pour la connexion entre le Hub et le Spoke que pour celle entre le Spoke et le Hub.
+
+    * Lorsque l'on clique sur "Add", on voit bien que Azure *crée le peering dans les 2 sens* : +
+    image:AZ-104_Hub-Spoke-backup_07.jpg[]
+        ** Il faut 20 à 30 sec pour que le peering soit effectif (peering status "connected")
+
+[WARNING]
+====
+Là, on vient de voir une démo "théorique" de peering car entre 2 VNets uniquement, mais dans la *"vraie vie"* le *"Hub and Spoke"* n'est pas entre 2 VNets uniquement mais entre *plusieurs VNets* : 3 (minimum), 4, voire des centaines de VNets.
+
+-> Quand on a plusieurs VNets de raccordés avec le Hub, on rentre dans une *topologie d'architecture* appelée le *"Hub and Spoke"*. +
+On retrouve cette topologie d'architecture chez la plupart des Cloud providers (AWS, GCP) : +
+Une "étoile" avec un point central, le hub, raccordé à toutes ses extrémités, les spokes : UN hub et DES spokes.
+====
+
+*HUB and SPOKE* (pour une infra 100% Azure uniquement, et PAS hybride) :
+
+* le *hub* : va contenir tous les "services partagés" (que l'on ne va donc pas avoir besoin de redéployer dans les différents spokes) : 
+    ** DC : les contrôleurs de domaines
+    ** LB : les load balancers
+    ** FW : les firewalls
+    ** mon bastion
+
+* le *spoke* : un spoke est déjà un VNet. 
+
+    ** Il va pouvoir *représenter un environnement* : DEV, PROD, etc. +
+    A chacun d'eux va être associé un subnet, on va donc avoir *un VNet et plusieurs subnets*.
+
+    ** un spoke peut également *être un VNet hébergé chez un tiers*.
+        *** Exemple : imaginez que vous travaillez avec une société partenaire qui édite un soft de notes de frais, hébergé sur Azure. +
+        Vous souhaitez peut-être que vos collaborateurs accèdent à ce soft directement au travers d'un IP privée. +
+        Pour ce faire, on va peerer notre hub avec un spoke qui contient l'infrastructure de gestion de notes de frais proposée par la société partenaire.
+
+En résumé : 
+
+    * *Le peering* est fait pour *peerer des environnements d'applicatifs* hébergés dans Azure, en PROD, PrePROD, etc. qui sont représentés par des spokes
+    * Mais cela peut aussi être *peerer un VNet distant* d'un partenaire d'une autre société pour pouvoir exploiter le logiciel qu'elle nous met à disposition en *mode PaaS*.
+    * le peering est la jonction de 2 VNets entre eux et le Hub and Spoke est une topologie d'architecture qui va nous permettre de faire des économies.
+
+Comment le *Hub and Spoke* permet-il de *faire des économies* ?
+
+    * Tous les services partagés du Hub vont pouvoir être partagés via le peering avec les spokes.
+        ** Sans cela, si par exemple dans le spoke Dev du précédent schéma on avait eu besoin d'authentification AD, il aurait fallu déployer nos DC dans le spoke. Idem pour tous les autres spokes ayant besoin d'accéder à l'AD.
+
+*Focus sur le peering dans le cas de la topologie d'architecture Hub and Spoke* : 
+
+    * Pour fonctionner, le Hub and Spoke a *besoin d'autres services Azure* que le seul peering : +
+    image:AZ-104_Hub-Spoke-backup_08.jpg[width=600]
+
+        ** des *UDR*, User Defined Routes : une *table de routage* statique que l'on va appliquer à des subnets
+            *** Une UDR peut être associée à plusieurs subnets MAIS un subnet ne peut être associé qu'à une seule UDR
+        ** la fonctionnalité de *Traffic Forwarded*
+        ** une *NVA*, Network Virtual Appliance : soit c'est une VM sur laquelle on a installé le rôle "Routing and remote access", soit un Azure Firewall (ou un autre firewall comme du F5, du Fortinet, etc. L'avantage de l'Azure Firewall est d'être un service managé par Microsoft, c'est du PaaS)
+
+    * -> Tout ceci permet de *faire transiter les flux* entre un hub et un spoke qui veut communiquer avec un autre spoke
+    
+    * Dans le cas de l'exemple précédent, si VNet-Spoke veut communiquer avec VNet-Spoke2, il va falloir : +
+    image:AZ-104_Hub-Spoke-backup_09.jpg[width=600]
+
+        ** appliquer une *UDR* au subnet de VNet-Spoke
+            *** cette UDR, une table de routage, va dire que, pour accéder à 172.16.0.0/24 (correspond à VNet-Spoke2), il va falloir que le prochain *bond* soit l'IP privée de ma NVA, donc ici de l'Azure Firewall qui va être créé dans le hub
+        ** La *NVA*, Azure Firewall ou VM Windows, va être déployée dans le Hub et va faire office de router : elle va router les paquets entre les différents spokes.
+        ** le *Traffic Forwarded* : son rôle est de laisser les paquets transiter entre vos VNet-Spoke et VNet-Spoke2 en passant par le hub
+    
+    * -> Tout ceci va rendre le hub capable de faire transiter des paquets qui passent par lui mais ne lui sont pas destinés, mais sont destinés à un VNet qu'il connaît.
+
+.Bond = liaison d'agrégation
+[NOTE]
+====
+Un bond est une fonctionnalité permettant de regrouper plusieurs cartes réseau physiques en une seule interface réseau logique. +
+Cela permet d'augmenter la bande passante et la redondance du réseau.
+====
+
+*DEMO : création d'une UDR*
+
+    * L'*UDR* est une table de routage venant *supplanter* l'autre table de routage d'Azure, à savoir les *system routes*
+
+        ** En fait, *les system routes peuvent vite être supplantées* par 2 services Azure : 
+
+            *** les *UDR* : table de routage toujours prioritaire par rapport aux system routes
+            *** le *protocole BGP*, Border Gateway Protocol, qui va permettre de propager des routes dynamiquement. +
+            Si le protocole BGP dit le contraire d'un system route, c'est lui qui prend le pas sur les chemins par défaut par les system routes
+        ** donc l'ordre de priorité est 1) UDR -> 2) protocole BGP -> 3) System routes
+
+    * Pour créer une UDR, on recherche sur le Portal Azure "*Route tables*" +
+    image:AZ-104_Hub-Spoke-backup_10.jpg[]
+        ** Les UDR doivent toujours être appliquées à des *subnets qui sont dans la même région qu'elle*
+        ** une fois l'UDR créée, je vais lui ajouter une route : +
+        image:AZ-104_Hub-Spoke-backup_11.jpg[]
+        ** les "next hop type" et "next hop address" correspondent au type et à l'IP du prochain bond réseau, à savoir une NVA qui sera ici un Azure Firewall et qui sera sur l'IP privée 10.0.0.4, ce qui correspond à la 1ere IP disponible dans un subnet (voir chapitre "VNet, subnet, NIC, NSG")
+    
+    * Là, j'ai créé mon UDR et sa route, mais je ne l'ai appliquée à rien. +
+    -> Je vais donc dans la section "subnets" de mon UDR, et je lui associe le subnet voulu (ici d'un de mes spokes) : +
+    image:AZ-104_Hub-Spoke-backup_12.jpg[]
+
+    * On pourrait également créer un Azure Firewall pour compléter la mise en place de notre topologie Hub and Spoke. +
+    Créer un Azure Firewall est simple, mais prend une bonne 10e de minutes.
+        ** L'Azure Firewall va avoir un subnet dédié dans le hub et va permettre de faire communiquer les spokes entre eux en passant par le hub.
+        ** Tout ceci va me permettre de router des paquets entre mes spokes tout en les faisant transiter par un point unique, le hub, et son Azure Firewall qui va filtrer les paquets et être utilisé comme routeur pour router les paquets entre les spokes.
+
+==== Azure Backup : Mars agent, ABS et Recovery Service Vault
+
+*Azure Backup* est un service PaaS permettant de *backuper 3 types de ressources* : 
+
+    * 1️⃣ *VMs sur Azure* : que l'on va pouvoir backuper dans un *RSV*, *Recovery Service Vault*, le "coffre-fort" de vos backups +
+    image:AZ-104_Hub-Spoke-backup_14.jpg[width=400]
+        ** Ce RSV a une rétention théorique de 99 années
+        ** Ce RSV va stocker votre backup dans un *storage account*, par défaut en *GRS* (Geo-Redondant Storage, votre backup sera donc redondé dans une autre région)
+            *** Ce storage account est managé par Microsoft, vous n'y aurez pas accès et ne le verrez même pas dans la console Azure MAIS il existera bien.
+
+            *** Ce storage account est par défaut en GRS MAIS si jamais on ne veut pas de réplication dans une 2nd région, par exemple pour des contraintes réglementaires, on peut toujours AVANT le 1er backup, le passer à ZRS (Zone-redundant storage) ou en LRS (Locally-redundant storage), et dans ce cas il n'y a PAS réplication dans une 2nd région. Mais dès lors si on perd sa SEULE région, on perd également son backup. +
+            -> Mais 🔥 *attention* 🔥, une fois que le *1er backup a été effectué*, il n'est *PLUS possible de changer* le type de réplication +
+            image:AZ-104_Hub-Spoke-backup_31.jpg[] +
+            _-> Une fois effectuée la 1ere sauvegarde, les choix de "Storage replication type" seront grisés dans les propriétés du RSV_
+
++
+.GRS, LRS, ZRS
+[NOTE]
+====
+* *LRS* : *Locally-redundant storage*. Maintain 3 copies of my files in the same datacenter
+* *ZRS* : *Zone-redundant storage*. Distributes data across multiple data centers in the same region 
+* *GRS* : *Geo-redundant storage*. Distributes 6 copies of your files across 2 data centers (3 in the primary region, and 3 in the secondary one).
+====
+
+        ** Le RSV est obligatoirement dans la *même région que la VM à backuper*
+        ** Ce storage account en GRS va permettre d'avoir une *copie du backup dans une autre région* ("Cross Region Restore") : +
+        Si ma VM est en North Europe (NE), mon RSV doit obligatoirement être créé en NE et son storage account va automatiquement être répliqué dans la région Pair de NE qui est West Europe (WE)
+
+        ** Gros avantage de ce système, il va permettre la *mise en place d'un PCA* (Plan de Continuité d'Activité)
+            *** Le jour où il y a une rupture de la normalité en NE, on va pouvoir restaurer notre VM en WE, ce qui va permettre le PCA : "j'ai un problème sur une région A, je restaure ma sauvegarde dans une région B"
+            *** Il ne s'agit *PAS de PRA* (Plan de Reprise d'Activité) : il n'est pas ici question de basculement, de failover ou de failback
++
+.Failover et failback
+[NOTE]
+====
+Voir : https://www.rubrik.com/insights/the-difference-between-failover-and-failback
+
+* *Failover* is the ability to switch automatically and seamlessly to a reliable backup system. +
+The failover operation switches production from a primary site to a backup (recovery) site.
+
+* *Failback* returns production to the original (or new) primary location after a disaster (or a scheduled event) is resolved.
+
+-> When an error is detected a failover workflow changes data sources to a recovery system while a failback workflow restores data back to the original state after a ransomware event or other corporate data loss.
+====
+
+        ** possibilité de faire des sauvegardes "FULL"
+        ** *Soft Delete* à 14 jours : il s'agit d'une corbeille ; quand on supprime une sauvegarde de VM, cette sauvegarde pourra toujours être restaurée pendant 14 jours, après elle sera définitivement supprimée.
+            *** Le Soft Delete peut être activé / désactivé dans les Security Settings du RSV. +
+            Si on le désactive, on recevra dans la foulée un mail de Microsoft m'informant que la corbeille du RSV a été désactivée. +
+            image:AZ-104_Hub-Spoke-backup_32.jpg[]
+
+        ** Le backup peut être configuré *soit à la création* de la VM, *soit après*.
+
+            *** *Backup configuré lors de la création de la VM* : +
+            image:AZ-104_Hub-Spoke-backup_13.jpg[width=800]
+
+            *** Backup configuré APRES la création de la VM -> *création d'un Recovery Services Vault (RSV)* : 
+            image:AZ-104_Hub-Spoke-backup_15.jpg[] 
+            image:AZ-104_Hub-Spoke-backup_16.jpg[]
+                **** Ce RSV doit être créé dans la même région que la VM à backuper
+                **** Une fois le RSC créé, il reste à la configurer : +
+                image:AZ-104_Hub-Spoke-backup_17.jpg[]
+                image:AZ-104_Hub-Spoke-backup_18.jpg[]
+                {lb}
+                Ici on indique que l'on souhaite backuper une VM tournant sur Azure. +
+                -> On pourrait backuper d'autres types de ressources hébergées sur d'autres types d'environnement, comme du on-premises
+                image:AZ-104_Hub-Spoke-backup_19.jpg[]
+                **** Il faut ensuite définir une *stratégie de backup* : rétention par semaine, par mois, par année, fréquence 
+                image:AZ-104_Hub-Spoke-backup_20.jpg[]
+                **** Il est possible de ne backuper QUE l'OS de la VM (son disque) sans les disques de données (problématique de confidentialité par exemple) via l'option "OS Disk Only"
+
+    * 2️⃣ Backup des infra *on-premises* - *Agent MARS* : *QUE pour des fichiers et dossiers sur Windows* +
+    image:AZ-104_Hub-Spoke-backup_22.jpg[] +
+    Si on a un serveur de fichiers sur Windows contenant des fichiers et des dossiers, on va pouvoir les backuper sur Azure, dans un RSV, via l'installation d'un logiciel appelé l'*agent MARS* (Microsoft Azure Recovery Services)
+        ** En installant l'agent, on va sélectionner les fichiers à backuper Azure va se charger d'externaliser le backup dans un RSV
+        ** Exemple : tous les mercredis Philippe s'en sert pour backuper son poste de travail Windows dans Azure. Pour ce faire, il a installer sur sa machine l'agent Azure Backup, et cet agent, représenté par le fichier *mars.exe*, va permettre de sauvegarder vos ressources dans Azure +
+        image:AZ-104_Hub-Spoke-backup_21.jpg[]
++
+[NOTE]
+====
+Tout ce qui est *envoyé VERS Azure* est *gratuit* en termes de flux réseau : tout mon backup externalisé, toute la bande passante utilisée pour envoyer mes données dans mon RSV n'est pas facturé par Microsoft. +
+-> Microsoft ne *facture* que la bande passante *EN SORTIE* d'Azure, *au-delà des premiers 5 Go*.
+
+Attention ! Pour le backup dont parlait Philippe, la bande passante n'est pas facturée, mais il est facturé pour la volumétrie de stockage de son backup dans son RSV, donc dans son storage account.
+====
+
+        ** Si je choisis dans Azure Backup de backuper des "Files and folders" sur du "On-Premises", Azure va directement me proposer de télécharger l'agent MARS. +
+        image:AZ-104_Hub-Spoke-backup_23.jpg[]
+        image:AZ-104_Hub-Spoke-backup_24.jpg[]
+            *** L'agent MARS va pouvoir connaître mon RSV via un fichier "VaultCredentials", téléchargeable sur la page et valable 10 jours : +
+            image:AZ-104_Hub-Spoke-backup_25.jpg[]
+                **** Ce fichier ne contient ni plus ni moins que le chemin vers votre RSV
+
+    * 3️⃣ Backup des infra *on-premises* - *VM ABS* (Azure Backup Server) : *pour des VMs on-premises* +
+    image:AZ-104_Hub-Spoke-backup_26.jpg[] +
+    Si sur son infra on-premises on a des VMs, sur des hypervisuers Hyper-V ou VMWare, et des machines physiques, il est possible de les sauvegarder dans Azure en installant une VM dite "ABS" (Azure Backup Server) dans notre réseau on-premises.
+        1. Cette VM va déployer un agent sur nos machines physiques ou virtuelles, 
+        2. agent qui va permettre de backuper nos machines physiques ou virtuelles sur la VM ABS 
+        3. qui va ensuite externaliser ce backup dans votre RSV
+
+        ** DEMO avec le backup de VMs sur Hyper-V et VMWare : +
+        image:AZ-104_Hub-Spoke-backup_27.jpg[]
+        ** Azure va alors vous proposer de télécharger le logiciel ABS pour l'installer sur un serveur on-premises : +
+        image:AZ-104_Hub-Spoke-backup_28.jpg[]
+        image:AZ-104_Hub-Spoke-backup_29.jpg[]
+            *** Ce logiciel nécessite un Windows Server 2016 ou 2019 et la taille de son fichier d'install est de 4.2 Go +
+            image:AZ-104_Hub-Spoke-backup_30.jpg[]
+
+
+
+-> Il s'agit là des 3 méthodes de backup proposées par Azure, mais on peut également parfaitement backuper avec du *Vim* ou du *Netbackup*
+
+    * Ces services sont d'ailleurs proposés dans Azure
+    * MAIS l'avantage d'*Azure Backup*, via les 3 méthodes proposées, est qu'il s'agit d'un *service PaaS* -> On ne manage PAS de VM. 
+        ** Tout est géré au niveau de Microsoft dans le RSV.
+
+            
+
+
+
+
+
+TO BE COMPLETED
+
+== Ressources
+
+D'autres sites permettant de préparer la certification :
+
+    * Le cours Udemy de Alan Rodrigues (payant) : https://www.udemy.com/course/microsoft-certified-azure-administrator/
+    * Ce site d'un personne ayant réussi les anciens examens 303 et 304 et donnant quelques conseils et ressources : https://www.programmingwithwolfgang.com/how-to-pass-az-303-and-az-304-certification-exams/
+
+    * Learning paths on MS Learn : https://learn.microsoft.com/en-us/certifications/azure-administrator/
+    * MS Learn : https://docs.microsoft.com/en-us/learn/browse/?roles=administrator&products=azure
+    * Azure Code Samples : https://azure.microsoft.com/en-us/resources/samples/?sort=0
+    * Official Azure Documentation : https://docs.microsoft.com/en-us/azure/
+    * Official Microsoft Azure YouTube Channel : https://www.youtube.com/user/windowsazure
+    * L'excellent cours YouTube de PHILIT qui couvre l'AZ-104 et l'AZ-305 : https://www.youtube.com/playlist?list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
+
+Sites de *labs* et *workshops* pour pratiquer : 
+
+    * Azure Citadel - Labs and Workshops : https://azurecitadel.com/
+    * Microsoft Cloud Workshop - More labs and workshops : https://microsoftcloudworkshop.com/
+    * Labs from Microsoft Training on GitHub : 
+        ** https://github.com/MicrosoftLearning/AZ-303-Microsoft-Azure-Architect-Technologies : *LA* ressource officielle de Microsoft pour pratiquer l'AZ-303
+        ** https://github.com/MicrosoftLearning/AZ-104-MicrosoftAzureAdministrator/
+        ** Ces labs de Microsofts sont vraiment des guides "step by step" permettant de manipuler les technologies Azure autour d'un thème donné.
+
+Sites d'examens blancs (*mock exams*), questions / réponses pour s'entraîner : 
+
+    * ExamTopics AZ-104 : https://www.examtopics.com/exams/microsoft/az-104/
+
+Site pour se familiariser avec le site de certification de Microsoft : https://aka.ms/examdemo
+
+== Mock exams
+
+=== Free exam from XXX
+
+----
+Q1) Some question
+
+ ✅ good
+ ❌ bad
+
+
+Q2) Some other question
+----
+
+== Lexique
+
+[glossary]
+ABS:: Azure Backup Server
+ACU:: Azure Compute Units. Notion used for Web Apps service plans to "give a number" to the pair processing speed / memory (like 100 ACU, 200 ACU, etc.)
+ARS:: Azure Route Server
+BGP:: Border Gateway Protocol
+DC:: Domain Controller (pour un AD)
+FQDN:: Fully Qualified Domain Name
+GPO:: Group Policy Object
+GRS:: Geo-Redundant Storage
+IAM:: Identity and Access Management
+IPAM:: IP Address Management
+IPSec:: Internet Protocol Security
+MACsec:: Media Access Control Security
+MARS:: Microsoft Azure Recovery Services
+MX:: Mail eXchanger. A mail exchanger record (MX record) specifies the mail server responsible for accepting email messages on behalf of a domain name. It is a resource record in the Domain Name System (DNS).
+NIC:: Network Interface
+NSG:: Network Security Group
+NVA:: Network Virtual Appliance
+PCA:: Plan de Continuité d'Activité
+PRA:: Plan de Reprise d'Activité
+RBAC:: Role-Based Access Control
+RCO:: Recovery Time Objectives
+RPO:: Recovery Point Objectives
+RSV:: Recovery Service Vault
+SKU:: *Stock-Keeping Unit* (SKU) is a generic inventory term, that allows to represent the different shapes of the product.
+SSPR:: Self-Service Password Reset
+UDR:: User Defined Route
+UO:: Unité d'Organisation
+UPN:: User Principal Name
+VNG:: Virtual Network Gateway
+WAN:: Wide Area Network. Désigne le réseau informatique connectant les sites d'une entreprise entre eux et à Internet. +
+le SD WAN est évolution du WAN lui conférant davantage d'agilité et de flexibilité. +
+Pour plus de détails, voir https://www.pyxya.fr/le-wan-intelligent/wan-sd-wan-et-limites-actuelles/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

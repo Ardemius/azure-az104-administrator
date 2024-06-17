@@ -1,0 +1,8 @@
+= Ressources sur la préparation à la certification Azure AZ-104 Azure Administrator
+
+Toutes mes notes sont regroupés dans les fichiers : 
+
+	* link:az104-azure-administrator_notes.adoc[]
+
+
+
