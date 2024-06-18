@@ -70,7 +70,7 @@ Le site propose également un *AZ-104 Online Tutorial* : https://www.testpreptra
 Pour un *poster des certifications Microsoft*, très régulièrement mis à jour, voir https://aka.ms/certificationsposter
 ====
 
-== Cours de PHILIT sur l'AZ-104 et l'AZ-305
+== Cours de PHILIT sur les certifications AZ-104 et l'AZ-305
 
 De mon côté, je vais commencer par suivre les cours en ligne de PHILIT : https://www.youtube.com/playlist?list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT +
 -> Il s'agit en fait de Philippe PAIOLA (philippe.paiola@gmail.com)
@@ -90,9 +90,9 @@ Ressources conseillées par PHILIT pour se préparer à la certification :
 
     * Le blog de Thomas MAURER : https://www.thomasmaurer.ch/2020/03/az-104-study-guide-azure-administrator/
 
-=== Certification AZ-104 EP01 : Azure AD (AAD) & VNet
+=== AZ-104 EP01 : Azure AD (AAD) & VNet
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=JoGL_Q7ihG8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
+URL vidéo PHILIT : https://www.youtube.com/watch?v=JoGL_Q7ihG8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=1
 
 ==== Identité et ADD
 
@@ -369,9 +369,9 @@ Celles-ci seront fournies sont forme de tableau.
 +
 WARNING: Par défaut, rien n'est conservé, c'est à nous d'activer et de configurer ces logs
 
-=== Certification AZ-104 EP02 : Hub & Spoke et Azure Backup
+=== AZ-104 EP02 : Hub & Spoke et Azure Backup
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=EbZLEcDVF8g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
+URL vidéo PHILIT : https://www.youtube.com/watch?v=EbZLEcDVF8g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=2
 
 ==== Hub & spoke (peering, UDR, NVA...)
 
@@ -695,21 +695,174 @@ Attention ! Pour le backup dont parlait Philippe, la bande passante n'est pas fa
             *** Ce logiciel nécessite un Windows Server 2016 ou 2019 et la taille de son fichier d'install est de 4.2 Go +
             image:AZ-104_Hub-Spoke-backup_30.jpg[]
 
-
-
 -> Il s'agit là des 3 méthodes de backup proposées par Azure, mais on peut également parfaitement backuper avec du *Vim* ou du *Netbackup*
 
     * Ces services sont d'ailleurs proposés dans Azure
     * MAIS l'avantage d'*Azure Backup*, via les 3 méthodes proposées, est qu'il s'agit d'un *service PaaS* -> On ne manage PAS de VM. 
         ** Tout est géré au niveau de Microsoft dans le RSV.
 
+=== AZ-104 EP03 : VPN S2S (Site à Site), VNET-TO-VNET & PRA
+
+URL vidéo PHILIT : https://www.youtube.com/watch?v=cuWs3E1Zmm8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=3
+
+==== VPN S2S (Site à Site dans Azure)
+
+* *Plusieurs composants* sont requis pour créer une *connexion VPN Site à Site* avec Azure : 
+
+    ** 1️⃣ le plus important, un *VNet* Azure : 
+        *** un composant spécifique va être attribué à ce VNET, le *Gateway subnet* : ce subnet va être dédié à *recevoir les connexions distantes depuis vers VPN on-premises*.
+        *** Ce VNET doit être conforme à la RFC 1918 "Adress Allocation for Private Internets" : https://datatracker.ietf.org/doc/html/rfc1918[]
+        *** L'espace d'adressage de ce VNet doit être différent de celui de votre espace d'adressage on-premises
+    
+    ** Dans votre réseau *on-premises*, il va y avoir un *composant VPN* (F5, Fortinet, Juniper, Checkpoint, etc.) qui *DOIT avoir une IP publique* afin que Azure puisse l'utiliser pour de se connecter au réseau on-premises.
+        *** On peut également utiliser comme VPN un Windows Server avec le rôle "Routing and Remote Access".
+
+    ** Entre les 2, il faut créer *une connexion VPN* qui va passer par le *réseau Internet*. +
+    Pour créer cette connexion VPN, on utilise 2 composants Azure : 
+        
+        *** 2️⃣ une *VNG*, Virtual Network Gateway : 
+            **** C'est la *représentation du VPN Azure dans Azure*
+            **** Elle a forcément une *IP publique*
+
+        *** 3️⃣ une *LNG*, Local Network Gateway : 
+            **** C'est la *représentation de votre VPN on-premises*
+            **** Elle a une IP publique qui correspond à celle de votre VPN on-premises pour indiquer à Azure à quelle IP publique il doit se connecter pour atteindre votre réseau on-premises.
             
+    ** 4️⃣ une *clé PSK* (Pre-shared key)
+        *** Wikipedia : In cryptography, a pre-shared key (PSK) is a shared secret which was previously shared between the two parties using some secure channel before it needs to be used.
+        *** Il s'agit d'une clé commune définie à la fois dans mon VPN on-premises et dans ma VNG afin de leur permettre de communiquer, s'authentifier et ainsi permettre la création du tunnel IPsec entre eux.
+
+.Tunnel IPSec, protocole IKE et clés PSK
+[NOTE]
+====
+* *What is IKE ?* (https://www.linkedin.com/advice/0/how-do-you-choose-between-ikev1-ikev2-ipsec[]) : 
+
+    ** IKE (Internet Key Exchange) is a protocol that establishes a secure association between two peers, called Security Associations (SAs), that define how to encrypt and authenticate IPsec traffic. IKE also exchanges cryptographic keys and negotiates other parameters, such as the encryption algorithm, the authentication method, and the lifetime of the SAs. +
+    IKE has two phases:
+
+        *** phase 1 creates a secure channel between the peers, called the IKE SA
+            **** Gemini : *Phase 1 de IKE* (Authentification) : *Utilise les clés PSK* pour la vérification mutuelle de l'identité des participants.
+
+        *** phase 2 creates one or more IPsec SAs to protect the actual data traffic.
+            **** Gemini : *Phase 2 IKE* (Échange de clés et chiffrement) : *Négocie, génère et échange des clés de chiffrement dynamiques* (comme des clés AES), qui sont ensuite utilisées par IPSec pour protéger les communications VPN.
+
+* *Gemini* : 
+
+    ** Le *protocole IKE* intervient en amont du processus IPSec, en établissant une connexion sécurisée et en négociant les clés de chiffrement nécessaires : 
+
+        1. Une fois qu'IKE a réussi l'*authentification entre les 2 parties*, soit par l'usage de certificats numériques, soit par l'utilisation d'une clé PSK partagée (alternative plus simple mais moins sécurisée) 
+        2. et qu'il a réussi l'*échange des clés de chiffrement dynamiques* nécessaires à la sécurisation la communication VPN, 
+        3. alors IPSec peut commencer à chiffrer et à authentifier les paquets de données qui traversent le tunnel VPN.
+
+    ** IKE établit une SA (*Security Association*) pour chaque canal de communication (entrant et sortant) du tunnel VPN. +
+    -> La SA définit les algorithmes de chiffrement, d'authentification et de mode de fonctionnement à utiliser pour protéger les communications.
+        *** Les algorithmes d'authentification SA (Security Association) sont utilisés pour authentifier l'origine et l'intégrité des paquets de données qui traversent le tunnel VPN. Ils font partie de la phase 2 d'IKE et de la négociation IPSec.
+
+    ** Les *clés PSK*, quant à elles, jouent un rôle crucial dans l'*authentification* mutuelle entre les parties prenantes dans le processus IKE. Elles permettent d'établir une confiance mutuelle avant que les clés de chiffrement IPSec ne soient négociées et échangées. +
+    Les clés PSK doivent être partagées de manière sécurisée entre les parties prenantes AVANT l'établissement de la connexion VPN.
+====
+
+[NOTE]
+====
+Documentation Microsoft listant les principaux fournisseurs de *périphériques VPN* : https://learn.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-about-vpn-devices
+
+    * Pour chaque VPN, cette documentation donne le lien vers les informations de l'éditeur pour la configuration de son VPN, y compris la partie configuration dans Azure.
+    * Les paramètres IKE phase 1 et phase 2 sont également donnés en fin de page
+====
+
+* Le VPN on-premises peut être configuré soit en PolicyBased soit en RouteBased : 
+    ** *RouteBased* : *à préférer*, on galère moins, car il va y avoir un *routage dynamique de propagation de routes* qui va être utilisé par le VPN Site à Site
+    ** *PolicyBased* : 
+        *** tout doit être défini manuellement
+        *** on aura en phase d'authentification QUE de l'IKE v1, et non le choix entre de la v1 ou de la v2
+        *** sur un même VPN, on ne pourra pas faire du Site à Site et du Point à Site. Les connexions VPN seront SOIT en Site à Site SOIT en Point à Site
++
+.VPN Point à Site vs VPN Site à Site
+[NOTE]
+====
+* Un *VPN Point à Site* se configure au niveau du poste de travail. +
+Il s'agit d'un *client lourd* à installer et qui va permettre à celui-ci de se connecter à votre réseau virtuel Azure à distance.
+
+* Dans le cas d'un VPN Site à Site, c'est l'intégralité de votre espace d'adressage on-premises que vous mettez potentiellement à disposition pour se connecter à votre VNet.
+====
+
+*DEMO* de configuration du *router Synology RT2600ac*, qui *fait aussi VPN*, de la cave de Philippe 😉
+
+    * Je commence par créer un nouveau Resource group : RG-SYNO-VPN
+        
+    * Puis je crée dans ce RG une 2️⃣ *nouvelle Virtual Network Gateway* (VNG)
+        ** opération que prend du temps sur Azure
+        ** L'IP publique de cette VNG est l'IP que je vais devoir renseigner dans mon RT2600ac
+        ** La VNG est un service managé par Azure, il y a donc peu d'options de configuration :
+
+            *** création d'une *connexion Point à Site*
+            *** *choix du SKU* (Basic, Standard, High Performance) qui va correspondre à la bande passante associée au VPN
+                **** Plus le SKU est élevé plus le VPN va coûter cher, mais plus la bande passante proposée par Microsoft va être élevée
+            *** *activer le mode "actif-actif"* pour le VPN : c'est à dire avoir 2 liaisons VPN vers 2 périphériques VPN on-premises en étoile.
+                **** Donc si l'un des 2 tombe, l'autre prend le relais
+
+    * Cette VNG a besoin d'un 1️⃣ *VNet* pour fonctionner, ici VNET-AZURE
+        ** parmi ses subnets, on voit un  *GatewaySubnet* (créé via le bouton "+ Gateway subnet") et qui est managé par Microsoft (/28 ou /29 minimum pour être créé par Azure) +
+        image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_01.jpg[]
+
+    * On va maintenant créer la 3️⃣ *Local Network Gateway* (LNG) qui va contenir 2 informations importantes : 
+        ** l'*IP publique* de notre VPN
+        ** les *espaces d'adressage* qui auront le *droit d'accéder à Azure* +
+        image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_02.jpg[]
+            *** Sans ces derniers, quand bien même notre connexion VPN serait effective (marquée comme "connected"), on ne recevrait aucun flux du réseau on-premise car Azure les dropperait car non appartenant à un espace autorisé
+
+    * On termine en créant une connexion VPN qui va utiliser : +
+    image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_03.jpg[]
+
+        ** VNet : VNET-AZURE
+        ** VNP
+        ** LNG
+        ** Shared key (clé PSK)
+
+    * Pour information, dans ma VNG, je retrouve la configuration de la connexion Point à Site que je peux définir si besoin
+
+{sb}
+
+Quelques précisions sur le *VPN Point à Site* : 
+
+    * Le Point à Site vous permet de télécharger un *client lourd* depuis le portail Azure
+    * Une fois installé, quand vous allez vous authentifier, celui-ci va utiliser un *système de certificats client / serveur* et donc c'est bien *votre poste de travail lui-même qui va pouvoir se connecter à Azure* +
+    -> Ce client lourd ne va pas vous demander un login / mot de passe correspondant à votre email professionnel, il va juste authentifier votre poste de travail.
+        ** Pratique car cela permet d'*automatiser* d'une certaine façon une *connexion vers Azure à base de certificats*, auto-générés sur votre poste de travail puis rajoutés dans le magasin de certificats, via une console MMC (Microsoft Management Console), ou dans votre poste de travail Windows.
+
+    * Plusieurs protocoles sont utilisés par le VPN Point à Site :
+
+        ** *SSTP* (Secure Socket Tunneling Protocol) de Microsoft : fonctionne sur le port 443
+        ** *OpenVPN* : fonctionne lui aussi sur le port 443
+
+        ** L'usage du *port 443* permet de *passer les pare-feux beaucoup plus facilement*, y compris sur votre poste de travail.
+            *** Généralement le HTTPS sur le port 443 est ouvert en sortie dans les entreprises
+
+    * Avec un *VPN Point à Site*, il est possible de *s'authentifier* : 
+        ** soit *directement à l'aide de son poste de travail* (comme expliqué plus haut)
+        ** soit avec son *compte Azure Active Directory*
+        ** soit avec son *compte Active Directory*, mais dans ce cas il vous faut un serveur RADIUS on-premises pour mapper le tout
++
+.Protocole RADIUS
+[NOTE]
+====
+RADIUS (Remote Authentication Dial-In User Service) est un *protocole client-serveur* permettant de *centraliser des données d'authentification*.
+Le serveur RADIUS (installé par exemple sur Linux) communique avec un client, appelé NAS (network access server, par exemple un routeur CISCO).
+
+image::AZ-104_VPN-S2S-VNet-to-VNet-PRA_04.png[width=600]
+====
+
+    * Si on utilise des certificats, il est possible de les auto-générer sur son poste de travail depuis une simple commande Powershell
+
+==== TO BE COMPLETED
 
 
 
 
 
-TO BE COMPLETED
+
+
+
 
 == Ressources
 
@@ -760,28 +913,36 @@ Q2) Some other question
 ABS:: Azure Backup Server
 ACU:: Azure Compute Units. Notion used for Web Apps service plans to "give a number" to the pair processing speed / memory (like 100 ACU, 200 ACU, etc.)
 ARS:: Azure Route Server
+ASA:: Adaptive Security Appliances is a piece of cybersecurity hardware sold by Cisco
 BGP:: Border Gateway Protocol
 DC:: Domain Controller (pour un AD)
 FQDN:: Fully Qualified Domain Name
 GPO:: Group Policy Object
 GRS:: Geo-Redundant Storage
 IAM:: Identity and Access Management
+IKE:: Internet Key Exchange. Le protocole IKE est chargé de négocier la connexion. Avant qu'une transmission IPSec puisse être possible, IKE est utilisé pour authentifier les deux extrémités d'un tunnel sécurisé en échangeant des clés partagées.
 IPAM:: IP Address Management
 IPSec:: Internet Protocol Security
+LNG:: Local Network Gateway
 MACsec:: Media Access Control Security
 MARS:: Microsoft Azure Recovery Services
+MMC:: Microsoft Management Console
 MX:: Mail eXchanger. A mail exchanger record (MX record) specifies the mail server responsible for accepting email messages on behalf of a domain name. It is a resource record in the Domain Name System (DNS).
 NIC:: Network Interface
 NSG:: Network Security Group
 NVA:: Network Virtual Appliance
 PCA:: Plan de Continuité d'Activité
 PRA:: Plan de Reprise d'Activité
+PSK:: Pre-shared key
+RADIUS:: Remote Authentication Dial-In User Service. RADIUS est un protocole client-serveur permettant de centraliser des données d'authentification.
 RBAC:: Role-Based Access Control
 RCO:: Recovery Time Objectives
 RPO:: Recovery Point Objectives
 RSV:: Recovery Service Vault
+SA:: Security Association
 SKU:: *Stock-Keeping Unit* (SKU) is a generic inventory term, that allows to represent the different shapes of the product.
 SSPR:: Self-Service Password Reset
+SSTP:: Secure Socket Tunneling Protocol
 UDR:: User Defined Route
 UO:: Unité d'Organisation
 UPN:: User Principal Name
