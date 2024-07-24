@@ -72,14 +72,15 @@ Pour un *poster des certifications Microsoft*, très régulièrement mis à jour
 
 == Cours de PHILIT sur les certifications AZ-104 et l'AZ-305
 
-De mon côté, je vais commencer par suivre les cours en ligne de PHILIT : https://www.youtube.com/playlist?list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT +
--> Il s'agit en fait de Philippe PAIOLA (philippe.paiola@gmail.com)
+* De mon côté, je vais commencer par suivre les cours en ligne de PHILIT : https://www.youtube.com/playlist?list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT +
+-> Il s'agit en fait de Philippe PAIOLA (philippe.paiola (symbol goes here) gmail.com)
+    ** Philippe a été formateur Microsoft
 
 [TIP]
 ====
 Philippe fait partie du Club Azure Insiders et poste régulièrement sur le Teams associé 😉
 
--> Et pour ce que j'en vois, Philippe doit maintenant faire partie de Microsoft, il a une adresse interne : philippe.paiola@microsoft.com
+-> Et pour ce que j'en vois, Philippe doit maintenant faire partie de Microsoft, il a une adresse interne : philippe.paiola (symbol goes here) microsoft.com
 ====
 
 Ressources conseillées par PHILIT pour se préparer à la certification : 
@@ -591,7 +592,7 @@ Cela permet d'augmenter la bande passante et la redondance du réseau.
 
 *Azure Backup* est un service PaaS permettant de *backuper 3 types de ressources* : 
 
-    * 1️⃣ *VMs sur Azure* : que l'on va pouvoir backuper dans un *RSV*, *Recovery Service Vault*, le "coffre-fort" de vos backups +
+    * 1️⃣ *VMs sur Azure* : que l'on va pouvoir backuper dans un *RSV*, *Recovery Service Vault*, le "*coffre-fort*" de vos backups (mais pas que... On le verra avec le PRA inter-région) +
     image:AZ-104_Hub-Spoke-backup_14.jpg[width=400]
         ** Ce RSV a une rétention théorique de 99 années
         ** Ce RSV va stocker votre backup dans un *storage account*, par défaut en *GRS* (Geo-Redondant Storage, votre backup sera donc redondé dans une autre région)
@@ -682,7 +683,7 @@ Attention ! Pour le backup dont parlait Philippe, la bande passante n'est pas fa
 
     * 3️⃣ Backup des infra *on-premises* - *VM ABS* (Azure Backup Server) : *pour des VMs on-premises* +
     image:AZ-104_Hub-Spoke-backup_26.jpg[] +
-    Si sur son infra on-premises on a des VMs, sur des hypervisuers Hyper-V ou VMWare, et des machines physiques, il est possible de les sauvegarder dans Azure en installant une VM dite "ABS" (Azure Backup Server) dans notre réseau on-premises.
+    Si sur son infra on-premises on a des VMs, sur des hyperviseurs Hyper-V ou VMWare, et des machines physiques, il est possible de les sauvegarder dans Azure en installant une VM dite "ABS" (Azure Backup Server) dans notre réseau on-premises.
         1. Cette VM va déployer un agent sur nos machines physiques ou virtuelles, 
         2. agent qui va permettre de backuper nos machines physiques ou virtuelles sur la VM ABS 
         3. qui va ensuite externaliser ce backup dans votre RSV
@@ -701,7 +702,7 @@ Attention ! Pour le backup dont parlait Philippe, la bande passante n'est pas fa
     * MAIS l'avantage d'*Azure Backup*, via les 3 méthodes proposées, est qu'il s'agit d'un *service PaaS* -> On ne manage PAS de VM. 
         ** Tout est géré au niveau de Microsoft dans le RSV.
 
-=== AZ-104 EP03 : VPN S2S (Site à Site), VNET-TO-VNET & PRA
+=== AZ-104 EP03 : VPN S2S (Site à Site), VNet to VNet & PRA
 
 URL vidéo PHILIT : https://www.youtube.com/watch?v=cuWs3E1Zmm8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=3
 
@@ -723,6 +724,7 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=cuWs3E1Zmm8&list=PLxf9spw2se
         *** 2️⃣ une *VNG*, Virtual Network Gateway : 
             **** C'est la *représentation du VPN Azure dans Azure*
             **** Elle a forcément une *IP publique*
+            **** Il s'agit d'une ressources chère et longue à créer (20 à 45 minutes)
 
         *** 3️⃣ une *LNG*, Local Network Gateway : 
             **** C'est la *représentation de votre VPN on-premises*
@@ -791,7 +793,7 @@ Il s'agit d'un *client lourd* à installer et qui va permettre à celui-ci de se
     * Je commence par créer un nouveau Resource group : RG-SYNO-VPN
         
     * Puis je crée dans ce RG une 2️⃣ *nouvelle Virtual Network Gateway* (VNG)
-        ** opération que prend du temps sur Azure
+        ** la *création d'une VNG* sur Azure est une opération longue prenant *entre 20 et 45 minutes*
         ** L'IP publique de cette VNG est l'IP que je vais devoir renseigner dans mon RT2600ac
         ** La VNG est un service managé par Azure, il y a donc peu d'options de configuration :
 
@@ -854,15 +856,444 @@ image::AZ-104_VPN-S2S-VNet-to-VNet-PRA_04.png[width=600]
 
     * Si on utilise des certificats, il est possible de les auto-générer sur son poste de travail depuis une simple commande Powershell
 
-==== TO BE COMPLETED
+==== VNet to VNet
+
+NOTE: Philippe parle également du "VNet to VNet" comme d'une connexion VPN Site à Site entre 2 VNets
+
+* Pour connecter 2 VNet entre eux, le peering est une solution simple et efficace. +
+-> Néanmoins, certains clients préfère utiliser une *vieille technologie* présente sur Azure : le VNet to VNet
+
+image::AZ-104_VPN-S2S-VNet-to-VNet-PRA_05.jpg[]
 
 
+* Le VNet to VNet est une fonctionnalité permettant de raccorder 2 VNet entre eux via une liaison VPN de type Site à Site.
 
+* Les *avantages* du VNet to VNet :
 
+    ** la *sécurité* offerte par le *tunnel IPSec* de la liaison VPN
+        *** L'échange entre les 2 VNet est obligatoirement chiffré là où le chiffrement est optionnel pour le peering
+    ** Les 2 VNet peuvent être dans des *régions différentes*
 
+* Les *inconvénients* : 
 
+    ** Le VNet to VNet est *très cher* car une VNG est un composant cher (pour s'occuper "juste" de la connexion entre 2 VNet). +
+    En cherchant passant par la calculette Azure pour une "*Passerelle VPN*", on trouve les chiffres suivants +
+    (avec 730 heures ~ 1 mois d'usage d'une service à temps plein) : 
 
+        *** *usage de dev* soit "VPN de base" : ~25€ / mois
 
+        *** 1er *VPN de prod*, "VpnGw1" SANS la bande passante : ~133€ / mois
+            **** Mais il s'agit d'un VPN Site à Site, donc il faut ajouter le *coût de la bande passante du trafic sortant*. +
+            Si on prend 500 Go de trafic sortant, cela vient ajouter ~30€ / mois
+            **** Mais ici, il est question non pas de Site à Site mais de VNet to VNet (type de passerelle "Transfert entre réseaux virtuels" et non "VPN") à 16€ / mois MAIS comme il faut une VNG PAR VNet (connexion dans les DEUX sens), cela fait 16 x 2 ~30€ / mois
+            **** Donc, au total, on se retrouve avec un coût pour le VNet to VNet de (133 + 16) x 2 ~ *300€ / mois* +
+            image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_06.jpg[]
+
+    ** Il est *long à mettre en place* toujours à cause de la *VNG*
+        *** Rappel : pour créer une VNG, il faut entre 20 et 45 minutes
+        *** Par contre, il n'est *pas nécessaire de créer une LNG*
+
+* Composants nécessaires pour créer une connexion VNet to VNet, pour chaque VNet : 
+    ** un *Gateway Subnet*
+    ** une *VNG*
+    ** une clé *PSK*
+
+.Résumé : différences entre liaison en peering et connexion VPN Site à Site ?
+[NOTE]
+====
+Ces 2 services remplissent au final le *même rôle*, *relier 2 VNets entre eux*, mais des différences existent  : 
+
+    * Le peering utilise le protocole MacSec pour chiffrer certains échanges
+        ** plus simple à mettre en place
+        ** moins cher
+    
+    * La liaison VPN Site à Site chiffre les flux via le protocole IPSec
+        ** Ce type de connexion est *plus cher* MAIS est sécurisé "by design"
+        ** Tout comme le peering, les flux du VNet to VNet *ne transitent PAS par Internet*
+
+-> De manière générale, le *VNet to VNet* est *de moins en moins utilisé* et *remplacé par du peering*, surtout pour des topologies Hub and Spoke.
+====
+
+*DEMO : VNet to VNet*
+
+* Il faudrait commencer par avoir 2 VNets et donc 2 VNG 
+* puis aller dans "Connexion VPN" et faire un "Add connection" +
+image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_08.jpg[]
+* Et là indiquer que la "Connection type" est de type "VNet-to-VNet" et donner la 2nd VNG : 
+image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_07.jpg[width=400]
+
+==== PRA inter-région d'une VM
+
+* Si j'ai par exemple une VM (ici "W2K19") créée sur la région North Europe, je vais chercher à *me prémunir de la perte de la région Azure North Europe ENTIERE* (donc me prémunir de la perte de TOUS les data centers d'une région)
+    
+    ** Si je cherche à me prémunir de la *perte d'UN data center dans une région*, on utilisait les *Availability Zones (AZ)*
+    ** Et pour se prémunir des *pertes au sein d'UN data center*, on utilisait les *Availability Sets*
+
+* Dans ce cas de perte d'une région entière, je veux que ma VM soit *recréée dans une 2nd région*. +
+Dès lors, on entre dans une logique de DRP (Data Recovery Plan), de PRA (Plan de Reprise d'Activité)
+
+*SCHEMA* : +
+image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_09.jpg[]
+
+    * On retrouve notre VM "W2K19" (il y en a même une 2nd) avec un disque managé
+
+.Managed disk (disque managé)
+[NOTE]
+====
+Un disque managé est un disque qui est managé par Microsoft, c'est à dire que le VHD (Virtual Hard Drive) est contenu dans un disque qui n'est PAS accessible depuis Internet.
+
+-> Il s'agit du disque typique que l'on va utiliser pour les VMs de nos jours +
+(il est représenté sur le schéma par l'ensemble disque bleu / disque vert)
+====
+
+    * Quand on va configurer le PRA chez Microsoft, on va commencer par créer un compte de stockage au plus proche du managed disk
+    * et ce compte répliqué va recevoir les données répliquées du managed disk en *synchrone* : +
+    Tout ce qu'on écrit sur la VM va être répliqué dans un *compte de stockage "de cache" ASR* (*Azure Site Recovery*)
+        ** Nous n'accédons PAS à ce compte de stockage, mais celui-ci va contenir à tout moment une *copie du disque de la VM*
+    * Ce compte de stockage va *répliquer* les données dans une *2nd région* MAIS en *asynchrone*
+        ** Ce service n'est pas gratuit, la réplication d'une VM dans une 2nd région a un coût
+    * Cette 2nd région peut être liée à la région pair (par ex : West US et East US, ou France Central et France South) OU être complètement différente (France Central et une région des US par exemple), dans ce dernier cas, il faut juste se dire qu'il y aura de la latence.
+
+Comme on réplique les données de façon aynchrone, en cas de panne générale dans la région primaire, vous aurez *forcément une perte de données au moment de la réplication*.
+
+    * Comme il y a une perte, il va falloir prendre en compte des concepts de RPO et RTO : 
+
+        ** *RPO* - *Recovery Point Objective* : c'est la durée admissible de pertes des données pour une panne
+            *** Le RPO dépend avant tout de Microsoft : c'est la fréquence de rafraîchissement des données entre les 2 régions
+
+        ** *RTO* - *Recovery Time Objective* : C'est le temps que l'on va mettre pour basculer de la région primaire qui est tombée à la région secondaire
+            *** Le RTO dépend du client : c'est lui qui effectue le basculement sur la 2nd région
+
+        ** Plus ces 2 valeurs sont faibles, plus on aura des données à jour quand on basculera sur la 2nd région
+
+.Dans la 2nd région, la VM n'est pas dessinée dans le schéma, pourquoi ?
+[NOTE]
+====
+* Parce que Azure déclenchera le PRA uniquement quand vous l'aurez décidé, c'est à dire quand vous l'aurez déclenché manuellement.
+* A ce moment, Azure va prendre le VHD dans la 2nd région et s'en servir pour créer la nouvelle VM
+
+image::AZ-104_VPN-S2S-VNet-to-VNet-PRA_10.jpg[]
+
+-> Donc, en termes de coût, *on ne paye PAS 2 VMs à un instant "t"*
+====
+
+*Coûts associés à un PRA* : +
+image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_11.jpg[width=800]
+
+    * (déjà, on ne paye pas pour 2 VMs)
+    * le *stockage*
+    * la *bande passante* pour la synchro entre les 2 régions
+    * le *coût de protection de la VM* : quand on déclenche la protection d'une VM via un PRA, Azure va appliquer un coût supplémentaire à cette VM : une *licence de protection* pour ~20€ / mois
+
+.Pas de question sur le coût à la certification
+[NOTE]
+====
+Il n'y a *pas de question "de coût" dans la certification Azure* : les coûts évoluant en fonction des régions, les options ayant une incidence sur le coût, il serait vraiment compliqué de répondre à une question de ce type sans la calculatrice Azure.
+
+On peut vous poser une question du type "Voici mon use case, quelle est la solution la moins onéreuse à mettre en place ?", mais cela n'ira pas plus loin côté "coût".
+====
+
+*DEMO : PRA inter-région*
+
+.On accède à la configuration du PRA via le menu "Disaster recovery" de la VM
+image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_12.jpg[]
+
+* On commence par *choisir la région* de la VM du PRA
+    ** Faire un PRA entre 2 plaques géographiques semble mal avisé (mais possible), mieux vaut rester plus proche.
+    ** Dans le cas présent, à savoir ma VM w2k19 créée en North Europe, le plus logique est de configurer le PRA en France Central
+
+* Dans les "advanced settings" du "*Disaster recovery*", on a la possibilité : 
+    ** de changer de souscription pour la VM du PRA
+    ** définir un Resource group qui va accueillir le managed disk de la VM du PRA en attendant qu'elle soit créée
+    ** en fait les options permettant de choisir un Resource group, un VNet, une Availability Zone ou Set (toutes des options gratuites) permettent de pré-créer l'infrastructure nécessaire pour le déclenchement de la synchro du PRA
+
+    ** 💡 Bon à savoir : on peut donner au VNet qui va être créer dans la 2nd région le *même espace d'adressage que celui de la région primaire* -> le jour où je vais créer ma VM dans la 2nd région, elle pourra donc avoir la même IP que dans la région primaire puisqu'elle fera partie d'un même espace d'adressage (mais dans une autre région)
+        *** Donc pas besoin dans ce cas de s'embêter à repenser à tous les aspects réseau à la recréation de la VM, tout va être géré côté Microsoft.
+
+.Migration de VM d'une subscription à une autre
+[NOTE]
+====
+Fut un temps, on avait l'habitude de déclencher un PRA uniquement pour effectuer une migration de VM d'un abonnement (subscription) à un autre. +
+Néanmoins, c'est de moins en moins utilisé car dans un *Resource group*, il existe maintenant une *fonctionnalité permettant directement de déplacer une VM d'une subscription à une autre* : +
+image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_13.jpg[]
+====
+
+.Différences entre PRA et Backup
+[NOTE]
+====
+Tout deux répondent à des besoins différents : 
+
+    * Le *PRA* permet de *se prémunir de la perte d'une région* ET SURTOUT d'avoir *une VM qui va être synchronisée au cours du temps*, avec un projet de *basculement* qui de l'ordre de *15 min de perte de données*
+
+    * Un *backup* rentre plutôt dans un *PCA* (Plan de Continuité d'Activité).
+        ** Ce dernier va faire que, par exemple, on va backuper 1 fois par jour sa VM.
+        ** Donc à la restauration, à la date du dernier backup, la perte de données pourra être beaucoup plus conséquente qu'avec un PRA
+
+J'ai un peu de mal à comprendre cette explication de Philippe quant à ce qui est communément admis pour la différence entre un PRA et un PCA. +
+J'ai l'impression que Philippe explique ici qu'un PRA est un "PCA++" où l'on va synchroniser la sauvegarde de la VM au cours du temps.
+
+Voici les définitions communément admises pour un PCA et un PRA (voir https://www.naitways.com/nos-guides/guide-plan-de-reprise-dactivite/difference-pra-pca-comprendre-les-elements-qui-assurent-la-resilience-de-votre-entreprise/[]) : 
+
+    * *PCA (Plan de Continuité d'Activité)* : 
+        ** un PCA garantit que les opérations de l’entreprise, dans son ensemble, sont capables de fonctionner en cas d’incident.
+        ** Il se réfère aux mesures à prendre pour maintenir et poursuivre les activités d’une organisation face aux menaces potentielles.
+        ** le PCA définit en amont les risques susceptibles d’affecter les activités de l’entreprise. Il peut s’agir de catastrophes naturelles, de cyberattaques ou de fraudes. Ensuite, il met en place des solutions de protection et des mesures d’atténuation des risques identifiés, ainsi que des procédures de test pour vérifier leur efficacité.
+        ** -> *Azure Backup* (et les backups qu'il permet) s'inscrit dans un *PCA*
+
+    * *PRA (Plan de Reprise d'Activité)* : 
+        ** Un PRA vise à rétablir le système d’information de l’entreprise au plus vite en cas de sinistre. 
+        ** Le PRA vise à minimiser les temps d’arrêt de l’entreprise en maintenant l’accès aux infrastructure informatiques et aux applications critiques.
+        ** Il va se baser sur 2 éléments clés : le RPO et le RTO.
+        ** -> *Azure Site Recovery* s'inscrit dans un *PRA*
+
+    * Alors que le PCA consiste à maintenir le bon fonctionnement de l’activité globale d’une entreprise pendant et après un incident, le PRA se concentre plutôt sur les conditions de reprise de l’activité suite à un arrêt.
+
+    * Le *PCA* se base sur une *prévention des risques de perte de données* -> on fait des *backups* pour éviter de perdre ou de "trop perdre".
+    * Le *PRA* repose quant à lui sur une *récupération des données après sinistre* pour une reprise d'activité la plus rapide possible.
+
+-> DE MON POINT DE VUE : 
+
+    * Le *service de Azure backup* va permettre de conserver *PLUSIEURS backups* de nos VMs à différents moments
+    * Tandis que *le service de "Disaster recovery"* d'une VM Azure va permettre d'avoir *UN réplica* de ma VM *régulièrement synchronisé* avec celle-ci
+====
+
+    ** Azure permet maintenant de réserver les ressources nécessaires à la création de sa VM de PRA via les "*Capacity Reservation Groups*". +
+    -> Aussi étonnant que cela puisse paraître, c'est même le *seul moyen d'obtenir la GARANTIE* qu'au moment de sa demande de basculement, les *ressources nécessaires* à la création de nos VMs soient *disponibles* dans la 2nd région 😲
+    image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_14.jpg[width=800]
+        *** Pour information, les concurrents (AWS, GCP) ne s'engagent pas non plus (par défaut) sur la disponibilité des ressources au moment de la demande de basculement.
+        *** Cela s'explique par la *complexité* de la chose : c'est impliquerait que chaque data center serait capable d'absorber la charge de tous les autres data centers des autres régions.
+
+    ** On peut également demander à Azure d'*inclure tous les disks OU seulement le disque de l'OS* de la VM : +
+    image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_15.jpg[]
+
+* Pour estimer le coût de son PRA via la *calculatrice Azure*, il faut choisir "Récupération de site Azure" +
+image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_16.jpg[]
+
+* Pour info, on peut également faire du PRA intercloud privé du client, piloté par Azure : 
+    ** On va pouvoir avoir un client avec 2 data centers avec de l'hyper-V ou du VMWare on-premises
+    ** et la réplication des VMs entre ces 2 data centers se fait via Azure comme vu précédemment
+        *** Cela coûter 15€ / instance
+        *** Philippe ne l'a jamais vu chez aucun client jusqu'à maintenant...
+
+🔥 *TRES IMPORTANT* 🔥 : Le *PRA inter région Azure* se base lui aussi sur un *RSV* (Recovery Service Vault)
+
+    * Contrairement à ce que Philippe avait initialement dit dans le cours sur les backups, un RSV ne convient PAS que des backups (Azure Backup), il contient également tout ce qui est PRA inter-région
+    
+    * Dans le cas d'un PRA, on ne peut *PAS créer le RSV dans la même région "source"* que la VM (message d'erreur si on essaye)
+
+        ** On retrouve cette condition dans cet article de Microsoft détaillant comment configurer un *Disaster Recovery* à l'aide de *Azure Site Recovery* : +
+        https://learn.microsoft.com/en-us/azure/site-recovery/azure-to-azure-tutorial-enable-replication +
+        "Create a Recovery Services vault in any region, *except in the source region* from which you want to replicate VMs."
+
+    * Le RSV permet les fonctionnalités suivantes : 
+
+        ** *Failover* : On constate que la région primaire est tombée, et on décide de lancer un PRA vers la région secondaire (donc recréer notre infra dans la région secondaire)
+
+        ** *Failback* : On est sur la région secondaire et la région primaire redevient "up". Nos utilisateurs ont continué à travailler sur une VM qui a été créée sur la région secondaire et on ne veut pas perdre les données associées. +
+        Le failback va permettre de *répliquer notre VM dans l'autre sens*.
+
+        ** *Ordonnancement* : Par exemple, si on a un applicatif basé sur une BDD, un middleware et un frontend soit 3 VMs le composant. +
+        Si on a un PRA sur ces 3 VMs, au moment du basculement celles-ci vont être *recréées* mais potentiellement dans *n'importe quel ordre*.
+        Or on peut avoir un applicatif qui impose que pour fonctionner il faut d'abord le middleware, puis le frontend et enfin la BDD. +
+        -> L'*ordonnancement* va permettre de spécifier *dans quel ordre l'infra va être recréée* dans la 2nd région.
+
+        ** *Test de basculement* : Pratique quand on a des infras basées sur des *audit à base d'ISO-27012, 27001, etc.* 
+            *** Très souvent dans ce type d'audits, les auditeurs demandent à ce qu'un test de basculement soit effectué régulièrement (souvent 1 fois / an) afin de vérifier "avant le jour J et la cata" (rupture de normalité, inondation, etc.)" que tout est effectivement bien configuré. +
+            -> Les tests de basculement sont faits pour cela et vont permettre, quand on le souhaite, de recréer la VM dans un *VNet complètement cloisonné* des autres VNet (pas de peering, de VPN, de VNet to VNet ou d'Express Route)
+                **** Ce VNet sera uniquement utilisé pour la recréation de la VM (complètement *dédié aux tests de basculement*) pour vérifier que notre appli est bien recréée dans la 2nd région.
+                **** Et pour accéder à la VM, il faudra installer une IP publique dessus
+
+.Quelques infos sur la famille de normes ISO-27000
+[NOTE]
+====
+* *ISO-27012* : guidelines for cybersecurity. +
+It provides guidelines for managing cybersecurity risks within organizations. It offers recommendations for establishing cybersecurity policies, procedures, and controls to protect against cyber threats and vulnerabilities.
+
+* *ISO-27001* : It specifies the requirements necessary to implement, maintain and manage an ISMS (Information Security Management Systems), within the process of continuous improvement known as PDCA, an acronym for Plan-Do-Check-Act, in relation to the planning, doing, verifying and acting phases.
+
+-> Pour plus d'informations, voir : +
+https://www.sorinmustaca.com/the-iso-27000-family-of-protocols-and-their-role-in-cybersecurity/
+====
+
+=== AZ-104 EP04 : Azure Load Balancer & Application Gateway
+
+URL vidéo PHILIT : https://www.youtube.com/watch?v=MdRokWoGgr0&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=4
+
+==== Load Balancing Services sur Azure
+
+*Load balancing* :
+
+    * rediriger le trafic vers un ensemble de noeuds en fonction de différentes règles de routage
+    * notions de priorité, de pondération, règles de routage basées sur la géographie
+
+    * 4 load balancers sont disponibles sur Azure et managés par Microsoft : 
+
+        ** Application Gateway
+        ** Azure Front Door
+        ** Azure Load Balancer
+        ** Traffic Manager
+
+.Load balancing services
+image:AZ-104_load-balancer_01.jpg[]
+
+*Azure Application Gateway* : 
+
+    * Azure Application Gateway fonctionne sur la *couche 7 du modèle OSI*, "application layer"
+        ** On va y retrouver les protocoles *HTTP* et *HTTPS*
+
+    * L'Application Gateway va supporter derrière le *backend pool*, des *VMs qui sont des frontaux web*.
+
+.Backend Pool
+[NOTE]
+====
+The backend pool is a critical component of the load balancer. The backend pool defines the group of resources that serve traffic for a given load-balancing rule.
+
+Microsoft explanation : +
+https://learn.microsoft.com/en-us/azure/load-balancer/backend-pool-management
+====
+
+    * Usage classique d'un Application Gateway : j'ai un site web que je veux rendre disponible et, pour scaler dans Azure, dans un backend pool : 
+        ** Mon site web est par exemple déployé sur 10 VMs
+        ** Ce site web est dans un backend pool qui est derrière un Application Gateway
+        ** L'Application Gateway va porter l'*IP publique* de mon site web
+
+    * Le "problème" de l'Application Gateway est que c'est un service *régional* : 
+        ** Si notre site web est international, avec pour vocation d'être disponible aux Etats-Unix, en Chine, etc., l'Application Gateway, si par exemple créé en France Central, ne pourra rediriger des flux QUE vers des ressources en France Central. +
+        Donc Application Gateway en France Central -> backend pool en France Central
+
+*Azure Front Door* : 
+
+    * Front Door est un produit beaucoup plus récent que Application Gateway
+    * Il fonctionne également sur la *couche 7* du modèle OSI
+
+    * Gros avantage : service *global*
+        ** il va avoir une *VIP publique qui va être globale à plusieurs régions*, et va pouvoir rediriger le trafic vers différentes régions.
+
+.VIP (Virtual IP Address)
+[NOTE]
+====
+Gemini : a VIP stands for Virtual IP Address. It's not a physical network interface card, but rather a *logical IP address* assigned to a service or group of resources.
+
+Function: A VIP acts as a single point of entry for clients accessing a service. It doesn't have a physical network card itself but routes incoming traffic to the actual backend servers associated with the service.
+====
+
+    * Front Door est plutôt utilisé quand on a une application qui doit être accessible de manière globale (cad dans plusieurs régions)
+
+    * Exemple d'usage de Front Door et différence avec Application Gateway :
+
+        ** Une application est souvent constituée d'un frontend et d'un backend qui est une BDD.
+
+        ** Si l'application (site web) est *REGIONALE* (spécifique à 1 unique région), on va avoir un *Application Gateway* avec derrière des VMs dans 1 région, et derrière ces VMs on va retrouver 1 BDD de type *Azure SQL*, à savoir un produit par défaut régional.
+
+        ** Si l'application (site web) est *GLOBALE*, on va avoir un *Front Door* qui va rediriger le trafic dans différentes régions, avec dans chacune comme backend une BDD de type *Cosmos DB* qui va être répliquée dans les autres régions.
+
+*Autres usages de l'Application Gateway et de Front Door* : 
+
+L'Application Gateway et le Front Door permettent bien d'autres usages que la seule redirection de flux vers les différentes VMs d'un backend pool.
+
+    * *Déchargement SSL* : 
+
+        ** Le *certificat SSL* va être *porté par le load balancer*
+        ** Les utilisateurs vont arriver en HTTPS sur le load balancer, type Application Gateway, qui, comme il porte le certificat SSL, va pouvoir rediriger le flux en HTTP sur les backend pools
+        ** Donc l'utilisateur arrive en HTTPS et il est redirigé en HTTP sur le backend pool, ce qui permet de *décharger les frontaux web* de la couche de chiffrement / déchiffrement. +
+        -> Vous ne serez plus obligés d'héberger les certificats sur les frontaux web.
+
+    * *Réécriture d'URL et redirection* : 
+
+        ** si on arrive en "http://toto.com", l'Application Gateway va recevoir le flux en HTTP et va le rediriger en HTTPS.
+
+    * *Réécriture d'entêtes HTTP*
+    * *Affinité de cookies*
+    * *Différentes méthodes de routage*
+    * etc.
+
+-> Le Front Door fait globalement tout ce que fait l'Application Gateway MAIS c'est un service global.
+
+Autre point important : on peut *ajouter un WAF* (Web Application Firewall) à un Application Gateway ou Front Door
+
+    * un WAF est un firewall dédié à la protection des applicatifs web
+
+*Azure Load Balancer* : 
+
+    * Il fonctionne sur la *couche 4 du modèle OSI*, la couche transport, et travaille donc avec les protocoles *TCP* et *UDP*
+    * Ce service est soit *régional* soit (depuis peu) *global*
+    * présence de sondes d'intégrité pour vérifier les noeuds
+
+    * Il existe en 2 versions : 
+        ** la version basique, gratuite mais sans SLA associé
+        ** la version payante, globale avec SLA et disposant de nombreuses fonctionnalités
+
+*Azure Traffic Manager* : 
+
+    * Lui fonctionne avec le protocole *DNS*
+        ** le protocole DNS est associé avec la couche 7 "application" du modèle OSI
+    * Quand on crée le service Traffic Manager, on crée en fait un *profil* qui va concerner un nom de domaine (en *.trafficmanager.net)
+        ** Ce nom de domaine va être utilisé quand vous avez votre propre nom de domaine. +
+        Exemple : 
+            *** vous avez votre nom de domaine "toto.com"
+            *** vous allez créer un *enregistrement DNS*, qu'on appelle un *CNAME*, qui va pointer sur le nom de domaine .trafficmanager.net de votre profil
+
+    * -> Choisir un *profil* revient à *choisir une méthode de routage* parmi 6 disponibles : 
+        ** pondération
+        ** priorité
+        ** géographie
+        ** latence (basée sur les performances)
+        ** etc.
+
+[IMPORTANT]
+====
+Pour la certification *AZ-104*, on va très peu parler du Traffic Manager, mais surtout se concentrer sur l'*Application Gateway* et le *Load Balancer*.
+
+-> Ces 2 services font l'objet de beaucoup plus de questions que Front Door ou le Traffic Manager, qui eux sont vus plus en détails dans l'AZ-305.
+====
+
+*Ces 4 load balancers* sont tous des *services PaaS* : 
+
+    * Ils sont donc scalés automatiquement par Microsoft
+    * Mais rien ne nous empêche d'installer un soft de load balancing sur une VM dans Azure.
+        ** Exemple : un Windows Server avec le rôle permettant de faire du load balancing (depuis un server Windows)
+    * On peut également en utiliser d'autres comme du Juniper ou du F5
+
+.Quelques précisions sur le backend pool
+[NOTE]
+====
+Généralement, on a *dans le backend pool* soit des *VMs*, soit des *IPs*, soit des *App Services*.
+
+* Pour l'*Application Gateway*, l'*Azure Load balancer* et le *Traffic Manager* : 
+    ** on peut mettre des VMs sans problème dans le backend pool
+    ** Avec l'Application Gateway, plutôt que de pointer sur une VM dans le backend pool, on peut pointer sur un App Service qui peut être une web app.
+
+* *Front Door* est un peu particulier car dans le backend pool il peut *pointer sur d'autres load balancer* comme des Application Gateway :
+    ** On va donc avoir une VIP publique globale et on va rediriger les flux vers des Application Gateway qui sont déployés dans différentes régions Azure.
+    ** Ces Application Gateway vont eux-mêmes rediriger les flux sur des VMs ou des App Service.
+    ** Dans le backend pool du Front Door, on peut également *pointer vers un storage account*
+    ** On a des services PaaS, dans le Front Door, qui peuvent être la *cible des requêtes des clients à l'international*.
+====
+
+.Fonctionnement SANS et AVEC load balancer
+image:AZ-104_load-balancer_02.jpg[]
+
+Fonctionnement standard SANS load balancer : 
+
+    1. je suis un utilisateur et cherche à me connecter au site www.contoso.com
+    2. je commence par interroger avec une requête DNS le serveur DNS primaire, qui va potentiellement interroger d'autres serveurs DNS, afin de trouver l'IP du site www.contoso.com
+    3. le serveur DNS primaire me renvoie l'IP publique du site www.contoso.com
+    4. et je vais donc me connecter à la VM (dans notre cas) qui porte cette IP publique
+
+    * Mais si cette VM venait à tomber (attaque DDOS, procédures de maintenance et redémarrage, problème matériel, etc.), alors le site www.contoso.com ne serait plus accessible.
+
+Fonctionnement standard AVEC load balancer : 
+
+    * le load balancer va permettre de rediriger les flux de manière équitable entre les différents noeuds qui supportent le site web.
+
+    1. Les 1eres étapes sont les mêmes, l'utilisateur interroge le serveur DNS primaire pour obtenir l'IP du site www.contoso.com
+    2. Mais celui-ci ne va pas lui renvoyer ici l'IP publique du site sur une VM, MAIS va lui renvoyer l'*IP publique de l'Azure Load Balancer* (icône vert / bleu / blanc du schéma : icône officielle de l'Azure Load Balancer), ce qu'on appelle souvent une *VIP*
+    3. Et quand l'Azure Load Balancer va recevoir la requête de l'utilisateur, en fonction d'une règle de routage (3 disponibles), il va rediriger celle-ci vers l'une des VMs disponibles (celles qui sont "up")
+
+    * Un load balancer va donc pouvoir pallier la perte d'une VM dans un backend pool. +
+    Il permet d'augmenter la disponibilité de votre site web / applicatif web.
+        ** Par contre, pas de magie, si tous les noeuds de mon backend pool tombent, le site supporté sera alors indisponible...
+     
 
 == Ressources
 
@@ -914,8 +1345,10 @@ ABS:: Azure Backup Server
 ACU:: Azure Compute Units. Notion used for Web Apps service plans to "give a number" to the pair processing speed / memory (like 100 ACU, 200 ACU, etc.)
 ARS:: Azure Route Server
 ASA:: Adaptive Security Appliances is a piece of cybersecurity hardware sold by Cisco
+ASR:: Azure Site Recovery
 BGP:: Border Gateway Protocol
 DC:: Domain Controller (pour un AD)
+DRP:: Data Recovery Plan
 FQDN:: Fully Qualified Domain Name
 GPO:: Group Policy Object
 GRS:: Geo-Redundant Storage
@@ -923,6 +1356,7 @@ IAM:: Identity and Access Management
 IKE:: Internet Key Exchange. Le protocole IKE est chargé de négocier la connexion. Avant qu'une transmission IPSec puisse être possible, IKE est utilisé pour authentifier les deux extrémités d'un tunnel sécurisé en échangeant des clés partagées.
 IPAM:: IP Address Management
 IPSec:: Internet Protocol Security
+ISMS:: Information Security Management Systems
 LNG:: Local Network Gateway
 MACsec:: Media Access Control Security
 MARS:: Microsoft Azure Recovery Services
@@ -932,12 +1366,13 @@ NIC:: Network Interface
 NSG:: Network Security Group
 NVA:: Network Virtual Appliance
 PCA:: Plan de Continuité d'Activité
+PDCA:: an acronym for Plan-Do-Check-Act
 PRA:: Plan de Reprise d'Activité
 PSK:: Pre-shared key
 RADIUS:: Remote Authentication Dial-In User Service. RADIUS est un protocole client-serveur permettant de centraliser des données d'authentification.
 RBAC:: Role-Based Access Control
-RCO:: Recovery Time Objectives
-RPO:: Recovery Point Objectives
+RPO:: Recovery Point Objective
+RTO:: Recovery Time Objective
 RSV:: Recovery Service Vault
 SA:: Security Association
 SKU:: *Stock-Keeping Unit* (SKU) is a generic inventory term, that allows to represent the different shapes of the product.
@@ -946,7 +1381,10 @@ SSTP:: Secure Socket Tunneling Protocol
 UDR:: User Defined Route
 UO:: Unité d'Organisation
 UPN:: User Principal Name
+VIP:: Virtual IP Address
+VHD:: Virtual Hard Drive
 VNG:: Virtual Network Gateway
+WAF:: Web Application Firewall
 WAN:: Wide Area Network. Désigne le réseau informatique connectant les sites d'une entreprise entre eux et à Internet. +
 le SD WAN est évolution du WAN lui conférant davantage d'agilité et de flexibilité. +
 Pour plus de détails, voir https://www.pyxya.fr/le-wan-intelligent/wan-sd-wan-et-limites-actuelles/
