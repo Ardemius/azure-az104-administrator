@@ -455,7 +455,7 @@ image:AZ-104_Hub-Spoke-backup_03.jpg[]
         ** MAIS le chiffrement n'est *PAS activé par défaut*.
         ** MACsec ne chiffre que les flux entre les deux VNets. Il ne chiffre pas les flux entre les VNets et Internet ou entre les VNets et d'autres réseaux.
 +
-.Des détails sur le protocol MACsec
+.Des détails sur le protocole MACsec
 [NOTE]
 ====
 * MACsec uses a combination of *data integrity checks* and *encryption* to secure traffic traversing the link
@@ -541,6 +541,22 @@ Comment le *Hub and Spoke* permet-il de *faire des économies* ?
             *** Une UDR peut être associée à plusieurs subnets MAIS un subnet ne peut être associé qu'à une seule UDR
         ** la fonctionnalité de *Traffic Forwarded*
         ** une *NVA*, Network Virtual Appliance : soit c'est une VM sur laquelle on a installé le rôle "Routing and remote access", soit un Azure Firewall (ou un autre firewall comme du F5, du Fortinet, etc. L'avantage de l'Azure Firewall est d'être un service managé par Microsoft, c'est du PaaS)
++
+.Définition d'une NVA
+[NOTE]
+====
+* Azure Network Virtual Appliances (NVAs) are instrumental in *enhancing high availability* and *controlling traffic flows* within Azure applications. +
+They are particularly significant in *constructing demilitarized zones (DMZ)* in the cloud. 
+
+* NVAs in Azure *scrutinize all incoming and outgoing traffic*, *permitting only the traffic that complies with predefined rules*, thus ensuring a secure network boundary.
+
+-> The main purpose of an Azure NVA is to *handle and secure network traffic* in Azure cloud by doing *routing*, *firewall*, *load balancing*, *intrusion detection*, etc.)
+
+Ressources : 
+
+    * https://aviatrix.com/learn-center/cloud-security/azure-network-virtual-appliance/
+    * https://www.geeksforgeeks.org/azure-network-virtual-appliance/
+====
 
     * -> Tout ceci permet de *faire transiter les flux* entre un hub et un spoke qui veut communiquer avec un autre spoke
     
@@ -1146,7 +1162,7 @@ image:AZ-104_load-balancer_01.jpg[]
 .Backend Pool
 [NOTE]
 ====
-The backend pool is a critical component of the load balancer. The backend pool defines the group of resources that serve traffic for a given load-balancing rule.
+The *backend pool* is a critical component of the load balancer. The backend pool defines the group of resources that serve traffic for a given load-balancing rule.
 
 Microsoft explanation : +
 https://learn.microsoft.com/en-us/azure/load-balancer/backend-pool-management
@@ -1273,7 +1289,7 @@ Généralement, on a *dans le backend pool* soit des *VMs*, soit des *IPs*, soit
 .Fonctionnement SANS et AVEC load balancer
 image:AZ-104_load-balancer_02.jpg[]
 
-Fonctionnement standard SANS load balancer : 
+Fonctionnement standard *SANS load balancer* : 
 
     1. je suis un utilisateur et cherche à me connecter au site www.contoso.com
     2. je commence par interroger avec une requête DNS le serveur DNS primaire, qui va potentiellement interroger d'autres serveurs DNS, afin de trouver l'IP du site www.contoso.com
@@ -1282,18 +1298,264 @@ Fonctionnement standard SANS load balancer :
 
     * Mais si cette VM venait à tomber (attaque DDOS, procédures de maintenance et redémarrage, problème matériel, etc.), alors le site www.contoso.com ne serait plus accessible.
 
-Fonctionnement standard AVEC load balancer : 
+Fonctionnement standard *AVEC load balancer* : 
 
     * le load balancer va permettre de rediriger les flux de manière équitable entre les différents noeuds qui supportent le site web.
 
     1. Les 1eres étapes sont les mêmes, l'utilisateur interroge le serveur DNS primaire pour obtenir l'IP du site www.contoso.com
-    2. Mais celui-ci ne va pas lui renvoyer ici l'IP publique du site sur une VM, MAIS va lui renvoyer l'*IP publique de l'Azure Load Balancer* (icône vert / bleu / blanc du schéma : icône officielle de l'Azure Load Balancer), ce qu'on appelle souvent une *VIP*
-    3. Et quand l'Azure Load Balancer va recevoir la requête de l'utilisateur, en fonction d'une règle de routage (3 disponibles), il va rediriger celle-ci vers l'une des VMs disponibles (celles qui sont "up")
+    2. Mais celui-ci ne va pas lui renvoyer ici l'IP publique du site sur une VM, MAIS va lui renvoyer l'*IP publique de l'Azure Load Balancer* (icône vert / bleu / blanc du schéma : icône officielle de l'Azure Load Balancer, couche 4 du modèle OSI), ce qu'on appelle souvent une *VIP*
+    3. Et quand l'Azure Load Balancer va recevoir la requête de l'utilisateur, en fonction d'une *règle de routage* (3 disponibles), il va rediriger celle-ci vers l'une des VMs disponibles (celles qui sont "up")
 
     * Un load balancer va donc pouvoir pallier la perte d'une VM dans un backend pool. +
     Il permet d'augmenter la disponibilité de votre site web / applicatif web.
         ** Par contre, pas de magie, si tous les noeuds de mon backend pool tombent, le site supporté sera alors indisponible...
-     
+
+-> On va s'intéresser à ce 2nd fonctionnement
+
+==== Azure Load Balancer
+
+* Après la création du Load Balancer, je vais créer mes backend pools (il peut y en avoir plusieurs)
+    ** en effet, 1 Load Balancer va pouvoir rediriger les flux vers plusieurs applicatifs
+
+* des *sondes d'intégrité* (health probes) vont vérifier toutes les X sec que chaque noeud du backend pool sont bien up
+    ** Si un noeud (cad une VM) ne répond pas au bout de Y sec, le load balancer sort celui-ci du backend pool
+
+* Des *règles de load balancing* existent : 
+
+    ** *Modification de port* : par exemple si j'arrive sur le port 80 sur le load balancer, je vais être redirigé vers tel backend pool sur le port 8082, ce qui va permettre d'avoir un port qui n'est pas exposé sur Internet et qui est utilisé par mes VMs dans mon backend pool
+
+Il existe *2 versions* de l'Azure Load Balancer : 
+
+    * Version *"public"* avec une *IP publique* et qui redirige les flux vers un backend pool avec des *VMs accessibles via IP privées* +
+    image:AZ-104_load-balancer_03.jpg[width=600]
+
+.Azure Load Balancer : protection de l'adressage des VMs du backend pool (via SNAT)
+[NOTE]
+====
+Un *Load Balancer* va également permettre de *protéger l'adressage des VMs* du backend pool : 
+
+    * L'IP publique utilisée pour le trafic sortant du backend pool est alors portée celle du Load Balancer et PAS celles des VMs. +
+    -> Donc si une VM veut sortir sur Internet, elle va utiliser l'IP publique du Load Balancer, et non la sienne.
+    
+    * Ce masquage est réalisé à l'aide de la technique du *SNAT* (*Source Network Address Translation*). +
+    On va porter la requête sortante provenant de l'IP privée de la VM vers une ressource sur Internet à partir de l'IP publique de l'Azure Load Balancer.
+====
+
+    * Version *"internal"* avec une *IP privée* et qui redirige également vers des *VMs accessibles avec des IP privées* +
+    image:AZ-104_load-balancer_04.jpg[width=600]
+
+        *** On va souvent retrouver cet "internal Load Balancer" derrière un frontend. +
+        Exemple : 
+            **** On a 3 VMs en guise de frontend qui porte un site web (ex : IIS, Apache) 
+            **** Elles reçoivent des requêtes depuis un Azure Load Balancer PUBLIC ("version 1") qui va rediriger les flux vers les ports 80 de ces 3 VMs.
+            **** Mais pour fonctionner, ces 3 VMs ont besoin d'accéder à une BDD sur le 1433 (du SQL) +
+            Donc, on va mettre un Azure Load Balancer Internal derrière notre frontend, qui va porter une IP privée et va rediriger les flux vers des BDDs SQL.
+            Qui sont dans notre cas à priori managées par Microsoft MAIS qui peuvent très bien être des VMs (c'est d'ailleurs ce que l'on voit le plus souvent)
+
+NOTE: Le schéma indique un port 1443 mais en mode PaaS sur Azure pour du SQL c'est le port *1433* qui est utilisé (et on ne peut PAS changer de port)
+
+    * -> C'est donc la combinaison de ces 2 types de Load Balancer qui va permettre d'avoir des applications composées de frontend, backend, middleware hautement disponibles et scalables dans Azure
+
+L'Azure Load Balancer dispose de 2 *SKUs* : *Basic* (gratuit) ou *Standard* (payant) : +
+image:AZ-104_load-balancer_05.jpg[width=600]
+
+    * *Pas de SLA* en version Basic : si le service tombe, il n'y aura aucun dédommagement de la part de Microsoft (avoirs ou autres) contrairement à la version Standard.
+    * 1000 VMs possibles dans le backend pool en Standard contre seulement 300 en Basic
+
+    * Tous les *ports* sont par défauts *OUVERTS* dans la version *Basic*
+        ** Quand on arrive sur l'Azure Load Balancer en Basic, par défaut, aucun NSG n'est activé et donc tous les ports sont disponibles pour essayer d'accéder au backend pool
+        ** En version *Standard*, tous les ports sont *FERMES* par défaut et le Load Balancer vous oblige à appliquer un NSG pour définir les flux entrants accessibles.
+
+-> En gros, par défaut la version *standard* est "*sécurisée par design*"
+
+.Focus sur les Availability Zones (AZ)
+[NOTE]
+====
+image:AZ-104_load-balancer_06.jpg[width=600]
+
+* 1 région Azure possède *soit 3 AZ soit PAS DU TOUT*
+    ** Par exemple, on ne peut PAS avoir 1 région avec 2 AZ 
+
+* 1 Availability Zone (AZ) regroupe 1 ou plusieurs Data Center (DC)
+* Les DC d'une même AZ sont proches physiquement, MAIS entre les DC d'AZ différentes, il y a plusieurs kilomètres (une distance physique minimale).
+    ** -> Si les DC d'une AZ brûlent, il ne faut pas qu'il puisse s'étendre aux DC des autres AZ (cas malheureux d'OVH ces dernières années)
+
+* L'idée est que dans 1 région on puisse perdre 1 AZ MAIS pas les 2 autres
+====
+
+Spécificité de l'Azure Load Balancer en *Standard* (donc PAS disponible en Basic) : +
+-> Il peut être défini avec une *VIP* soit en *Zone redundant*, soit en *Zonal*
+
+image:AZ-104_load-balancer_07.jpg[width=800]
+    
+    * En *Zone redundant*, l'Azure Load Balancer va couvrir les 3 AZ vont rediriger les requêtes des utilisateurs vers vos backend, représentés sur le schéma par 3 subnets, chacun contenant des VMs.
+        ** Ici l'Azure Load Balancer est commun à 3 AZ, donc malgré la perte de 2 zones sur 3, il sera toujours capable de rediriger les requêtes vers la 3e zone.
+        ** C'est un choix garantissant une plus haute disponibilité que le Zonal, mais qui est également plus cher (du fait de la réplication de l'ALB dans toutes les zones)
+
+    * En *Zonal*, la VIP publique va être contenue dans une zone particulière. +
+        ** Donc,  quand on perd 1 zone en Zonal, on perd l'accès à son Load Balancer et à son backend pool
+
+    * Cette configuration doit être choisie *à la création* de l'Azure Load Balancer
+
+Il existe *3 méthodes de routages* sur les noeuds du backend pools : 
+
+    * *None* : pas de méthode de routage, l'ALB redirige la requête de l'utilisateur vers n'importe quelle VMs du backend pool.
+        ** C'est l'ALB qui choisit en fonction de la charge des noeuds, il n'y aura aucune "logique de décision" choisie par l'utilisateur.
+        ** C'est pas terrible en termes de routage... Pour un site web marchant, si la VM avec son panier tombe, le panier n'existe plus, on va réactualiser la page, constater sa disparition et devoir remettre dedans ce qu'il contenait précédemment.
+
+    * *Client IP* : basé sur l'IP publique de la requête utilisateur, l'ALB va toujours me rediriger vers la même VM.
+
+    * *Client IP and protocol* : avec chaque fois que j'utilise la même IP et le même protocole (HTTP par exemple), l'ALB va me rediriger sur le même noeud (donc la même VM).
+        ** Si mon IP ou mon protocole change, je peux dès lors me retrouver sur un autre noeud de mon backend pool.
+
+*DEMO : Création d'un Azure Load Balancer (SKU Standard, de type Public et Regional)*
+
+    1. Portail Azure, rechercher "load balancer" : on tombe sur la page "Load balancing / Load Balancer" avec listés les 4 types de Load Balancers sur Azure : Application Gateway, Front Door, Azure Load Balancer et Traffic Manager +
+    image:AZ-104_load-balancer_08.jpg[width=1000]
+
+    2. On fait un "Create" du "Load Balancer"
+
+    3. On configure les caractéristiques souhaitées de l'Azure Load Balancer : SKU (Basic / Standard / Gateway), Type (Public / Internal), Tier (Regional / Global) +
+    image:AZ-104_load-balancer_09.jpg[width=800]
+
+        ** On ne peut pas choisir un Tier "Global" avec un Type "Internal". 
+        -> Un type Internal implique une IP privée, or *on ne peut PAS avoir une IP privée de disponible dans plusieurs régions Azure*, cela n'existe pas techniquement.
+
+        ** Le *SKU "Gateway"*, dont il n'a pas été question dans ce cours, est apparemment une "version ++" du Standard, *spécialisée dans la gestion et l'ajout de 3rd party NVAs*. +
+        Dans sa documentation, Microsoft explique : 
+        
+            *** https://learn.microsoft.com/en-us/azure/load-balancer/tutorial-gateway-portal : +
+            {sb}
+            _Gateway Load Balancer is used for *transparent insertion of Network Virtual Appliances* (NVA). Use Gateway Load Balancer for scenarios that require *high performance* and *high scalability of NVAs*._
+
+            *** https://learn.microsoft.com/en-us/azure/load-balancer/gateway-overview : +
+            {sb}
+            _Gateway Load Balancer is a SKU of the Azure Load Balancer portfolio catered for high performance and high availability scenarios with third-party Network Virtual Appliances (NVAs). With the capabilities of Gateway Load Balancer, you can easily deploy, scale, and manage NVAs._
+
+    4. On configure la Frontend IP, à savoir l'*IP publique de mon ALB* +
+    image:AZ-104_load-balancer_10.jpg[width=1000]
+
+        ** C'est dans la création de la "Public IP address" que je vais indiquer si en termes d'Availability zone je suis "None", "Zone redundant" ou Zonal (c'est à dire spécifique à 1 zone) en sélectionnant ma zone parmi les 3 AZ de ma région.
+
+    5. On configure ensuite les *backend pools* +
+    image:AZ-104_load-balancer_11.jpg[width=1000]
+
+        ** Je peux choisir si je vais identifier les VMs des backend pools par leur NIC ou leur IP : 
+            
+            *** identification par la NIC : +
+            image:AZ-104_load-balancer_12.jpg[width=600]
+            
+            *** identification par l'IP : +
+            image:AZ-104_load-balancer_13.jpg[width=600]
+
+    6. On définit les *règles de routage entrantes* (*Inbound rules*) +
+    image:AZ-104_load-balancer_14.jpg[width=1000]
+        
+        ** La "*Session persistence*" correspond à la *méthode de routage* détaillée précédemment et peut prendre les valeurs "None", "Client IP" et "Client IP and protocol"
+
+        ** On crée la Health probe : +
+        image:AZ-104_load-balancer_15.jpg[width=300]
+            
+            *** "Interval" permet de configurer la durée (ici 5 secondes) au bout de laquelle, en l'absence de réponse, le noeud est sorti du cluster (cad la VM est sortie du backend pool)
+
+    7. Puis les règles de *routage sortantes* (*Outbound rules*, les règles de *SNAT*)
+
+        ** Pour rappel, cela permet aux VMs de mon backend pool d'aller sur Internet avec l'IP publique de mon Load Balancer
+
+    8. Après le "Review + create" final, l'ALB est disponible au bout de quelques minutes +
+    image:AZ-104_load-balancer_16.jpg[]
+
+==== Application Gateway (AG)
+
+* L'Application Gateway est un service Azure avec une *très bonne réputation* (marche vraiment bien)
+
+* L'AG est un service *régional*
+
+* l'AG *regroupe plusieurs services* : 
+        
+    ** *Déchargement SSL* : +
+    image:AZ-104_load-balancer_19.jpg[width=400]
+
+        *** On vient *mettre ses certificats sur l'Application Gateway*, et quand l'utilisateur voudra aller en HTTPS sur un site web contenu dans un backend pool, l'Application Gateway sera capable de *rediriger le flux en HTTP* en interne.
+        *** -> Cela permet de *décharger les backend pools de toute la couche de chiffrement / déchiffrement* du protocole SSL.
+
+    ** *Redirection d'URL* : +
+    image:AZ-104_load-balancer_20.jpg[width=400]
+    
+        *** quand l'utilisateur va vouloir aller en HTTP sur un site web contenu dans un backend pool, l'Application Gateway va le rediriger en HTTPS vers ce dernier.
+
+    ** *Réécriture d'entête HTTP*
+    ** *Affinité de cookies*
+    ** etc.
+
+NOTE: A savoir, c'est un service qui met *une 15e de minutes à être créé*.
+
+* *L'Application Gateway n'a QU'UNE IP* ("frontend IP" du schéma) +
+image:AZ-104_load-balancer_17.jpg[]
+
+    ** Dans l'exemple, une IP publique
+    ** Donc si on a 2 NDD (Nom De Domaine), "toto.com" et "tata.com", tous deux vont cibler la même IP, celle de l'Application Gateway, qui va ensuite rediriger la requête vers le backend pool contenant le bon site.
+    ** Au final, l'Application Gateway se comporte donc comme un *Reverse Proxy*, qui héberge plusieurs sites web
+
+* L'Application Gateway peut *protéger vos backend pools* à l'aide d'un *WAF* (Web Application Firewall)
+
+* L'Application Gateway peut utiliser *2 méthodes de redirection* pour rediriger les flux des utilisateurs : +
+image:AZ-104_load-balancer_18.jpg[]
+
+    ** *Path Based Routing* : un routage *fonction du path / chemin d'URL* utilisé
+        *** Dans l'exemple, www.contoso.com/images/* est redirigé vers le backend pool de VMs qui contiennent des images, et www.contoso.com/video/* est redirigé vers le backend pool de VMs qui contiennet des vidéos
+
+    ** *Multiple Site Routing* : un routage *fonction du host / nom d'hôte* de la requête
+        *** Dans l'exemple, www.contoso.com et www.fabrikam.com sont redirigés vers 2 backend pools différents.
+        *** Cela va par exemple permettre d'avoir 1 IP publique (celle de l'Application Gateway) qui porte tous les sites web de votre société.
+
+* L'Application Gateway est un service *scalable automatiquement* par Microsoft
+    ** On peut indiquer qu'on le déploie avec 1 instance, donc 1 noeud qui contient le service Application Gateway
+    ** MAIS si j'ai 10 000 000 de connexions d'un coup, je vais avoir la possibilité de scaler automatiquement jusqu'à par exemple 10 noeuds qui composent mon Application Gateway, ce qui va me permettre d'avoir un load balancer hautement disponible
+    ** Cette *scalabilité* peut être : 
+        *** en *autoscaling*
+        *** en *manuel* : on peut manuellement augmenter le nombre d'instances qui composent le service Application Gateway sur la région spécifique
+
+*DEMO : Création d'un Application Gateway*
+
+* L'AG fait partie de ces services PaaS qui ont besoin d'un *subnet dédié dans un VNet*.
+    ** Parmi les autres services ayant ce besoin, on peut citer : API Management, Azure Firewall, Azure Bastion (et d'autres)
+
+* Ici, du fait de sa durée de création de ~15 minutes, Philippe a déjà créé l'AG. +
+image:AZ-104_load-balancer_21.jpg[]
+    
+* L'Application Gateway est disponible en *différentes versions*, ici Philippe en a choisi une ("Tier : WAF V2") qui *intègre un WAF*, Web Application Firewall. +
+    ** Le *WAF* va *protéger vos frontaux* contre des attaques de type injections SQL, cross-site scripting, vulnérabilité Log4j, vulnérabilité Spring4shell, etc.
+    ** Le *WAF* est un *Firewall attribué à l'Application Gateway*.
+
+* Il est bien sûr possible de créer un Application Gateway SANS WAF
+
+* Quand on crée un Application Gateway AVEC un *WAF*, ce dernier est *par défaut en mode "Detection"* +
+image:AZ-104_load-balancer_22.jpg[width=400]
+    
+    ** mode *Detection* : le WAF va détecter l'attaque MAIS ne va pas en dropper les paquets
+    ** mode *Prevention* : le WAF va maintenant en plus dropper les paquets de l'attaque
+
+* Rappel : l'AG peut être autoscalable +
+image:AZ-104_load-balancer_23.jpg[width=400]
+    ** Il y a toujours 1 noeud qui compose mon AG et je peux avoir jusqu'à 10 instances de mon AG qui tournent pour répondre à une augmentation de la charge
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 == Ressources
 
@@ -1376,6 +1638,7 @@ RTO:: Recovery Time Objective
 RSV:: Recovery Service Vault
 SA:: Security Association
 SKU:: *Stock-Keeping Unit* (SKU) is a generic inventory term, that allows to represent the different shapes of the product.
+SNAT:: Source Network Address Translation
 SSPR:: Self-Service Password Reset
 SSTP:: Secure Socket Tunneling Protocol
 UDR:: User Defined Route
