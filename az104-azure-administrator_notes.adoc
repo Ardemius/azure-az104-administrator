@@ -554,8 +554,8 @@ They are particularly significant in *constructing demilitarized zones (DMZ)* in
 
 Ressources : 
 
-    * https://aviatrix.com/learn-center/cloud-security/azure-network-virtual-appliance/
-    * https://www.geeksforgeeks.org/azure-network-virtual-appliance/
+    * What is Azure Network Virtual Appliance (NVA) ? : https://aviatrix.com/learn-center/cloud-security/azure-network-virtual-appliance/
+    * What is An Azure NVA (Network Virtual Appliance) (2024/06/13) : https://www.geeksforgeeks.org/azure-network-virtual-appliance/
 ====
 
     * -> Tout ceci permet de *faire transiter les flux* entre un hub et un spoke qui veut communiquer avec un autre spoke
@@ -1236,8 +1236,11 @@ Autre point important : on peut *ajouter un WAF* (Web Application Firewall) à u
     * présence de sondes d'intégrité pour vérifier les noeuds
 
     * Il existe en 2 versions : 
-        ** la version basique, gratuite mais sans SLA associé
-        ** la version payante, globale avec SLA et disposant de nombreuses fonctionnalités
+        ** la version basique (SKU "Basic"), gratuite mais sans SLA associé
+        ** la version payante (SKU "Standard"), globale avec SLA et disposant de nombreuses fonctionnalités
++
+NOTE: Pour plus d'informations sur les *capacités cross-region ("Global")* de l'Azure Load Balancer en Standard, voir : +
+https://learn.microsoft.com/en-us/azure/load-balancer/cross-region-overview
 
 *Azure Traffic Manager* : 
 
@@ -1255,6 +1258,9 @@ Autre point important : on peut *ajouter un WAF* (Web Application Firewall) à u
         ** géographie
         ** latence (basée sur les performances)
         ** etc.
++
+NOTE: Pour plus d'informations sur les méthodes de routage du Traffic Manager, voir : +
+https://learn.microsoft.com/fr-fr/azure/traffic-manager/traffic-manager-routing-methods
 
 [IMPORTANT]
 ====
@@ -1415,7 +1421,7 @@ Il existe *3 méthodes de routages* sur les noeuds du backend pools :
 
     2. On fait un "Create" du "Load Balancer"
 
-    3. On configure les caractéristiques souhaitées de l'Azure Load Balancer : SKU (Basic / Standard / Gateway), Type (Public / Internal), Tier (Regional / Global) +
+    3. On configure les caractéristiques souhaitées de l'Azure Load Balancer : *SKU* (Basic / Standard / Gateway), *Type* (Public / Internal), *Tier* (Regional / Global) +
     image:AZ-104_load-balancer_09.jpg[width=800]
 
         ** On ne peut pas choisir un Tier "Global" avec un Type "Internal". 
@@ -1540,19 +1546,77 @@ image:AZ-104_load-balancer_22.jpg[width=400]
 image:AZ-104_load-balancer_23.jpg[width=400]
     ** Il y a toujours 1 noeud qui compose mon AG et je peux avoir jusqu'à 10 instances de mon AG qui tournent pour répondre à une augmentation de la charge
 
+* Dans son AG Philippe a créé 1 backend pool avec 2 targets : +
+image:AZ-104_load-balancer_24.jpg[width=800]
+image:AZ-104_load-balancer_25.jpg[width=500]
+    ** Ces 2 targets correspondent à 2 adresses IP privées, qu'il faut imaginer appartenir à 2 VMs Azure. +
+    Dans l'idée de cette démo, on aurait 1 site web qui serait hébergé sur ces 2 VMs qui composent notre backend pool.
 
+* A noter, via le *backend pool*, on peut rediriger les requêtes HTTP / HTTPS des utilisateurs : +
+image:AZ-104_load-balancer_26.jpg[]
+    ** vers un service PaaS Azure comme *Azure Web App*
+    ** OU vers un *Virtual Machines Scale Set* (VMSS) qui permet un *scaling horizontal*
+    ** OU vers des VMs
+    ** OU des IPs ou FQDN
 
+.Scaling horizontal et scaling vertical
+[NOTE]
+====
+* *Scaling horizontal* : J'ai 1 VM, et en cas d'augmentation de la charge, je vais créer une nouvelle instance de cette VM.
+    ** Je vais donc dupliquer la VM.
 
+* *Scaling vertical* : J'ai 1 VM, et en cas d'augmentation de la charge, ja vais rajouter du CPU et de la RAM à CETTE VM
+    ** Je vais donc rajouter des ressources à ma VM.
+====
 
+* L'*IP publique* de mon Application Gateway est disponible dans le *menu "Frontend IP configurations"* : +
+image:AZ-104_load-balancer_27.jpg[]
 
+* Le *déchargement SSL* se configure en ajoutant des listeners via le *menu "Listeners"* : +
+image:AZ-104_load-balancer_28.jpg[]
+    ** Ce listener correspond à un protocole (HTTP ou HTTPS) et un port d'écoute
+        *** Pour du déchargement SSL, on choisit bien sûr le protocole HTTPS
+    ** Je vais pouvoir soit uploader mon certificat soit en sélectionner un dans un Key Vault
 
+* La *redirection d'URL* se réalise en plusieurs étapes : 
+    
+    ** la *définition d'un listener* qui écoute l'IP publique de mon AG en HTTP sur le port 80
+        *** Dans cette exemple, le listener est de *type "Basic"*, c'est à dire que le trafic sera *router vers 1 seul backend pool*
+            *** Contrairement au type "Multi site" qui permet de router le trafic vers différents backend pools en fonction du nom d'hôte de la requête entrante. +
+            Par exemple, pour une boutique en ligne et un blog hébergés sur la même infrastructure, vous créez un listener "multi-site" avec deux règles : 1 pour router le trafic ciblant https://www.shopify.com/fr/site-de-vente-en-ligne vers le backend pool de la boutique et une autre pour router le trafic ciblant https://www.blogger.com/ vers le backend pool du blog.
 
+    ** la *définition d'une règle de routage* via le menu "Rules" qui va écouter certaines requêtes et les rediriger vers au moins 1 backend target
 
+        *** Les *requêtes écoutées* vont être représentées par un *listener* ("port80" ici) +
+        image:AZ-104_load-balancer_29.jpg[]
 
+        *** les *backend targets* peuvent être soit : 
 
+            **** des *backend pools* : +
+            image:AZ-104_load-balancer_30.jpg[]
+                ***** "*Backend target*" permet de spécifier *où le trafic sera dirigé*, à savoir quel sera le backend pool ciblé
+                ***** Les "*Backend settings*" permet de spécifier *comment le trafic sera traité une fois arrivé à destination* (algorithme de répartition de charge, délai d'inactivité, health probe, nombre maximal de connexions)
 
+            **** une *"Redirection"*, qui est la configuration qui nous intéresse pour notre *redirection d'URL*. +
+            image:AZ-104_load-balancer_31.jpg[]
 
+                ***** Cette configuration va nous permettre de faire de la *redirection vers un autre listener*. +
+                -> Ici je redirige le trafic PROVENANT de mon listener écoutant sur le port 80 VERS un autre listener qui pointe sur un backend pool en HTTPS en écoutant le port 443
 
++
+.Maintenance de site
+[NOTE]
+====
+Dans le cas d'une maintenance de votre site, vous pouvez également *rediriger les requêtes vers un "External site"*, qui peut être un FQDN représenté par une IP publique on-premise et qui héberge votre site temporairement pendant la maintenance de celui-ci dans Azure. +
+-> Cela permet d'avoir une *maintenance transparente pour les utilisateurs*.
+====
+
+* Les *sondes d'intégrité* se configurent dans le *menu "Health probes"* : +
+image:AZ-104_load-balancer_32.jpg[]
+
+* Le *menu "Backend health"* permet de consulter la *santé des VMs de mes backend pools* : +
+image:AZ-104_load-balancer_33.jpg[]
+    ** Ici Philippe avait créé 2 IPs privées "bidon", sans VM derrière, d'où le status "Unhealthy" renvoyé.
 
 
 
@@ -1646,6 +1710,7 @@ UO:: Unité d'Organisation
 UPN:: User Principal Name
 VIP:: Virtual IP Address
 VHD:: Virtual Hard Drive
+VMSS:: Virtual Machines Scale Set
 VNG:: Virtual Network Gateway
 WAF:: Web Application Firewall
 WAN:: Wide Area Network. Désigne le réseau informatique connectant les sites d'une entreprise entre eux et à Internet. +
