@@ -594,6 +594,13 @@ Cela permet d'augmenter la bande passante et la redondance du réseau.
         ** une fois l'UDR créée, je vais lui ajouter une route : +
         image:AZ-104_Hub-Spoke-backup_11.jpg[]
         ** les "next hop type" et "next hop address" correspondent au type et à l'IP du prochain bond réseau, à savoir une NVA qui sera ici un Azure Firewall et qui sera sur l'IP privée 10.0.0.4, ce qui correspond à la 1ere IP disponible dans un subnet (voir chapitre "VNet, subnet, NIC, NSG")
+
+.Définition d'un "hop" (qui est lié MAIS différent d'un "bond")
+[NOTE]
+====
+Quand on parle de réseau / network *un "hop" représente un saut*, une étape qu'un paquet de données effectue lors de son parcours d'un point à un autre. +
+Chaque fois qu'un paquet passe d'un appareil réseau à un autre (routeur, switch, etc.), on compte 1 hop.
+====
     
     * Là, j'ai créé mon UDR et sa route, mais je ne l'ai appliquée à rien. +
     -> Je vais donc dans la section "subnets" de mon UDR, et je lui associe le subnet voulu (ici d'un de mes spokes) : +
@@ -1618,6 +1625,263 @@ image:AZ-104_load-balancer_32.jpg[]
 image:AZ-104_load-balancer_33.jpg[]
     ** Ici Philippe avait créé 2 IPs privées "bidon", sans VM derrière, d'où le status "Unhealthy" renvoyé.
 
+=== AZ-104 EP05 : Supervision et Azure Monitor
+
+* *Azure Monitor* est un service "couteau suisse" qui contient plusieurs autres services : 
+    ** Azure Network watcher
+    ** les alertes (Azure Alerts)
+    ** Azure Log Analytics
+    ** etc.
+
+==== Azure Monitor
+
+.Présentation de Azure Monitor
+image:AZ-104_supervision_01.jpg[]
+
+* Azure Monitor vous permet de superviser vos ressources : 
+    ** Azure
+    ** on-premises
+    ** ou provenant d'un autre Cloud Service Provider (CSP comme AWS, GCP)
+    
+    ** -> Dans ces 2 derniers cas, cela requiert l'installation de *l'agent MMA* (Microsoft Monitoring Agent) sur les VMs associées.
+
+NOTE: *L'agent Dependency* vous permet de *visualiser les dépendances* associées à vos VMs on-premises ou d'autres CSP
+
+-> Azure Monitor est donc un service *multi-cloud*.
+
+* *Azure Monitor* est un service permettant de *récupérer* des *métriques* et des *logs* de différents services.
+    
+    ** Exemples de *métriques* : pourcentage d'utilisation de votre CPU, de votre RAM, le nombre d'accès disque, le nombre d'I/O par sec sur vos disques, la bande passante utilisée par votre VM en entrant et en sortant, taux d'utilisation d'une VM, etc.
+        *** Les métriques permettent de *mesurer le taux d'utilisation des ressources*
+
+    ** Exemples de *logs* : logs d'activité de vos ressources (*Activity Log*), journal d'évènements d'un OS, logs d'activité sur le portail Azure (tout ce qui est fait par les utilisateurs sur le portail Azure)
+
+* Types de ressources dont Azure Monitor peut récupérer les logs et métriques :
+
+    ** *Applications*
+    ** *Operating System* : différents types de journaux (journal d'administration, journal de sécurité, etc.)
+    ** *Azure Resources* : Web App, BDD managée par Microsoft, etc.
+    ** *Azure Subscription*
+    ** *Azure Tenant* (le tenant qui contient vos identités : les utilisateurs, les groupes, etc.) : les connexions de ces utilisateurs et groupes à votre tenant vous également pouvoir être ingérées dans Azure Monitor
+    ** *Custom sources* : F5, Fortinet, etc. Ces sources génèrent des logs d'activités au format XML, JSON, etc. qui peuvent également être importées dans Azure Monitor
+
+* Une fois ces logs et métriques récupérées, on va pouvoir les traiter de différentes manières : 
+    
+    1. phase *Insights* (phase "d'aperçu") : Insights contient une suite d'outils (Application Insights, Container Insights, etc.) qui vont permettre de troubleshooter, de visualiser l'état de votre applicatif sur le service PaaS en terme d'utilisation des ressources, de latence, etc.
+        *** Par exemple via Container Insights on va pouvoir monitor les noeuds, donc les VMs, d'un cluster Kubernetes
+
+    2. phase *Visualize* : affichage des métriques et logs sous forme de *dashboards* et *tableaux* compréhensibles pour l'humain
+        *** dashboards natif Azure ou tableau PowerBI par exemple (il existe des connecteurs PowerBI pour se connecter à Azure Monitor)
+
+    3. phase *Analyze* : analyse des logs et métriques via Metrics Explorer ou Log Analytics
+        *** *Log Analytics* permet de requêter les logs via le *langage KQL* (Kusto Query Language)
+
+    4. phase *Respond* : en fonction de certains métriques (ex : taux d'utilisation d'une VM, à 99% de CPU) : 
+        ** *génération d'alertes* et de notifications associées, qui vont pouvoir être envoyées à des équipes d'astreinte
+        ** ET *génération d'actions automatisées*.
+            *** Exemple : Comme l'exécution d'un script Powershell sur la VM qui est à 99% de CPU afin de redémarrer le service qui contient 99% de CPU d'utilisation de la VM
+
+    5. phase *Integrate* : phase où l'on va *"mapper" Azure Monitor avec des services qui orchestrent* sous forme d'évènements d'autres services Azure.
+        ** C'est par exemple le cas de *Logic Apps* (orchestrateur de services Azure) qui, à partir d'un évènement généré sur une VM, permet d'orchestrer, au travers de différents services Azure, la réponse au déclenchement de cet évènement (notion de déclencheur / *trigger*)
+
+*DEMO : Activity log & alerts*
+
+*METRIQUES et DASHBOARDS*
+
+    * Dans le portail Azure, sur une ressource de type VM, on peut accéder aux métriques suivants : 
+    image:AZ-104_supervision_02.jpg[]
+
+    * A partir de ces métriques, il est possible de *créer des dashboards* dans le portail Azure à l'aide de la fonctionnalité "Pin to dashboard" : +
+    image:AZ-104_supervision_03.jpg[]
+
+    * Ces dashboards peuvent être *privés* (Private) ou *partagés* (Shared)
+
+    * Ils sont accessibles via le *menu "Dashboard"* du portail Azure : +
+    image:AZ-104_supervision_04.jpg[width=150]
+        ** L'interface de dashboard d'Azure permet de modifier l'affichage des métriques qui y sont épinglées et peut être personnalisée à l'aide de toute une série de widgets (utilisateurs de l'AAD, notes de sécurité liées aux souscriptions Azure, etc.) +
+        image:AZ-104_supervision_05.jpg[]
+
+    * Ces dashboards peuvent être *partagés*, *exportés* et *imprimés*
+    image:AZ-104_supervision_06.jpg[]
+
+*JOURNAUX D'ACTIVITE*
+
+    * Toute ressource Azure (VM, IP publique, etc.) a un journal d'activité (*Activity log*) qui lui est attribué : +
+    image:AZ-104_supervision_07.jpg[]
+    * Par défaut, ce journal d'activité tous les évènements survenus sur la ressource durant les 6 dernières heures
+        ** Cette durée peut être modifiée et *monter jusqu'à 3 mois gratuitement*
+    
+    * L'Activity Log est disponible au niveau du *Management Group*, de la *Subscription*, du *Resource Group* et des *ressources* elles-mêmes.
+        ** Si mon Management Group contient 2 Subscriptions, son Activity Log va me permettre d'avoir dans une seule vue les logs d'activité de ces 2 abonnements.
+
+    * L'Activity Log n'est *PAS supprimable* (donc ne peut pas se faire supprimer suite à une attaque)
+
+    * Il est possible d'*exporter l'Activity log* dans un compte de stockage (*storage account*) et ainsi dépasser la limite de stockage gratuite de 3 mois : +
+    image:AZ-104_supervision_08.jpg[width=500]
+    {lb}
+    image:AZ-104_supervision_09.jpg[]
+    {lb}
+    image:AZ-104_supervision_10.jpg[width=600]
+
+*ALERTS et ACTIONS*
+
+    * Imaginons que l'on souhaite monitorer l'utilisation CPU d'une VM : je souhaite être alerter quand on arrive à 90% de CPU, et qu'une action soit alors effectuée pour faire baisser la consommation de CPU (comme l'exécution d'un script PowerShell redémarrant un service).
+
+    * Dans le portail Azure, dans la VM, aller dans le *menu "Alerts"* +
+    image:AZ-104_supervision_11.jpg[width=600]
+
+    * Faire un *"Create"* *"Alert Rule"*
+
+        ** Dans *"Scope"*, vous allez pouvoir *définir les ressources qui recevront l'alerte* (le scope de l'alerte) +
+        image:AZ-104_supervision_12.jpg[]
+            *** -> La même alerte pourrait être appliquée à plusieurs VMs
+
+        ** Ensuite, on définit un *signal*, la condition qui doit être remplie pour que l'alerte soit déclenchée. +
+        Ici on cherche le métrique "Percentage CPU" +
+        image:AZ-104_supervision_13.jpg[]
+            *** On va définir un *seuil d'alerte à 90% d'usage du CPU*, *calculé sur une période de 5 min* avec une *évaluation toutes les minutes* : +
+            image:AZ-104_supervision_14.jpg[]
+
+        ** Dans le *menu "Action"*, je vais définir les actions et notifications à envoyer dans une *"Action group"*. +
+        image:AZ-104_supervision_15.jpg[width=400]
+            *** L'action group va être *mis en place par Azure dès lors que l'alerte est déclenchée*
+
+            *** Dans l'exemple, on va créer un action group pour l'astreinte de l'entreprise toto : +
+            image:AZ-104_supervision_16.jpg[]
+            
+            *** On va définir 2 notifications pour cet action group : +
+            image:AZ-104_supervision_17.jpg[]
+
+                **** l'envoi d'un *mail au propriétaire de la ressource*
+                **** l'envoi d'un *SMS* (par exemple au téléphone de l'équipe d'astreinte de l'entreprise toto), ainsi qu'un *mail à une adresse spécifique*, ainsi qu'une *notification sur un smartphone* (via l'installation de l'app Azure sur celui-ci, https://play.google.com/store/apps/details?id=com.microsoft.azure)
+
+            *** Puis, dans l'onglet "Actions", on définit les actions devant être réalisées pour mitiger l'impact de cette alerte : 
+            image:AZ-104_supervision_18.jpg[width=500]
+
+                **** *Automation Runbook* : permet l'exécution d'un script Python ou PowerShell
+                **** *Azure Function* : donc du serverless, qui peut d'ailleurs être de nouveau du PowerShell
+                **** *ITSM* : permet le transfert à un ITSM (Jira, ServiceNow, etc.) et donc la création d'un ticket
+                **** *Logic App* : orchestrateur de services Azure
+                **** *Webhook* : pour l'appel à une URL qui derrière va exécuter du code
+                **** etc.
+
+            *** -> Cet Action group pourra être *réutilisé* plus tard pour d'autres alertes
+        
+        ** Dans l'*onglet "Details"* de l'Alert Rule, je vais pouvoir définir une *sévérité*, un nom et une description à cette alerte : 
+            *** 0 : alerte hyper critique, on va perdre des M€ dans les 5 min...
+            *** 3 et 4 indiquant qu'il s'agit juste d'une information
+
+    * La *liste de toutes les alertes* va être affichée ainsi dans le portail Azure : +
+    image:AZ-104_supervision_19.jpg[width=600]
+
+==== Azure Log Analytics
+
+* Ce service va vous permettre de *requêter vos journaux* et *tout ce qui est remonté dans Azure Monitor* au travers du *langage KQL* (Kusto Query Language)
+
+* Log Analytics se base sur un *"Log Analytics Workspace"* pour fonctionner. +
+Le Log Analytics Workspace est le container qui *va contenir tous les logs remontés par vos ressources* +
+(On peut le voir comme une piscine vide que l'on va remplir au fur et à mesure)
+    ** Le Log Analytics workspace n'est ni plus ni moins qu'un *Storage Account*
+    ** Ce logs vont ensuite être gérés au niveau d'Azure Monitor et Log Analytics
+
+* Ces logs, transmis en HTTPS au Log Analytics Workspace, peuvent venir : 
+    ** soit de *ressources Azure*
+    ** soit de *ressources en provenance d'autres CSP* (des VMs sur AWS, GCP, etc.), via l'installation de l'agent MMA
+    ** soit de *ressources on-premises*, en utilisant l'agent MMA et / ou en passant par un serveur SCOM
+        *** Le serveur SCOM est l'outil de supervision de Microsoft, chargé de récupérer les logs en provenance des VMs on-premises qu'il administre et supervise, puis d'envoyer ces logs vers le Log Analytics Workspace
+
+*DEMO : Log Analytics*
+
+    * Dans Azure Monitor, aller dans le *menu "Logs"* +
+    image:AZ-104_supervision_20.jpg[width=600]
+
+    * Je commence par *définir le scope de ma requête* : +
+    image:AZ-104_supervision_21.jpg[]
+
+    * Puis je *définis ma requête*, si besoin en m'aidant des templates fournis par Azure : +
+    image:AZ-104_supervision_23.jpg[]
+    image:AZ-104_supervision_22.jpg[]
+
+==== Azure Service Health
+
+* Ce service permet de *visualiser l'état des services Azure* : est-ce que tout va bien chez Microsoft, nos data centers sont-ils bien up and running, un service est-il tombé, etc.
+
+* Service heath permet de visualiser la liste de toutes les régions Azure : chaque point correspond à 1 région (plus de 60 régions disponibles) avec au moins 1 data center (vert tout va bien et rouge il y a un pépin...)
+
+* Exemple : si à un moment donné je n'arrive pas à me connecter à ma VM : 
+    ** Soit ma VM elle-même a un problème (virus, port fermé, etc.)
+    ** Soit le *service Virtual Machine Azure a un problème* -> Service Health va pouvoir vous informer de ce type de problème
+        *** Et pour être pro-actif et éviter devoir aller checker Service health tous les X, on peut *créer une alerte* en sélectionnant la souscription, le service à surveiller, la région +
+        image:AZ-104_supervision_24.jpg[]
+        *** La logique de création de cette alerte est la même que tout à l'heure, avec l'utilisation d'un Action Group.
+
+==== Azure Network Watcher
+
+* Ce service permet de *troubleshooter ce qui se passe sur vos réseaux virtuels Azure* (VNet)
+* Il est *automatiquement créé* dès lors que vous créez un VNet, sur la même région que le VNet
+
+* Network Watcher est un "couteau suisse" *regroupant toute une série de services Azure* : 
+image:AZ-104_supervision_25.jpg[]
+
+* Service *"Topology"* : 
+    ** va permettre de *générer le schéma d'architecture du VNet* sélectionné +
+    image:AZ-104_supervision_26.jpg[]
+    ** Ce schéma est téléchargeable au format SVG
+
+* Service *"IP Flow verify"* : 
+    ** va permettre de diagnostiquer les problèmes de connectivité (accès réseau) à une VM pour un protocole (TCP, UDP), une direction (Inbound, Outbound) et une source qui peut être distante (Internet ou votre réseau on-premises) : +
+    image:AZ-104_supervision_27.jpg[]
+    ** -> IP Flow verify est donc un bon outil pour diagnostiquer un problème de connectivité entre une VM Azure et votre réseau on-premises ou Internet.
+
+* Service *"Next hop"* : 
+    ** Next hop va se baser sur les UDR, les system routes et les tables de routage que vous avez définies pour *déterminer quel sera le prochain hop emprunté pour aller d'une VM azure à une IP cible* (comme l'IP publique d'un site web) +
+    image:AZ-104_supervision_28.jpg[]
+
+    ** Next hop ressemble en cela à l'utilitaire *tracert* aux différences prêt qu'il offre une meilleure visibilité (informations détaillées sur le routage interne) MAIS qu'il ne permet pas de mesurer la latence.
+
+* Service *"Effective Security rules"* : 
+    ** Ce service va récupérer la carte réseau / NIC d'une VM et *va permettre de visualiser toutes les règles qui s'appliquent RELLEMENT sur le NSG donné* +
+    image:AZ-104_supervision_29.jpg[]
+    ** C'est utile car quand un NSG contient un grand nombre de règles, il peut être difficile pour un humain de savoir quelles sont les règles qui s'appliquent réellement en fonction des priorités, des protocoles, du allow, du deny, etc. + 
+    image:AZ-104_supervision_30.jpg[]
+    
+* Service *"NSG Flow logs"* :
+    ** 1 NSG permet de protéger la NIC de ma VM (donc IP privée et IP publique) en filtrant les flux entrant et sortant sur les VMs MAIS, par défaut, il n'y a PAS de logs qui sont activés sur les NSGs. +
+    -> Le service NSG Flow logs permet de pallier cela et de *savoir ce qui transite par les NSGs*.
+    
+    ** Le principe du NSG Flow Logs est d'*activer dans un Storage Account cette gestion de logs* (cela devient donc payant) +
+    image:AZ-104_supervision_31.jpg[width=600]
+
+* Service *"VPN troubleshoot"* :
+    ** Rappel : VNG (Virtual Network Gateway) = VPN managé par Microsoft dans Azure qui se connecte à un VPN on-premises ou multi-cloud.
+    ** Imaginons qu'on ait une déconnexion sur mon réseau on-premises à partir de mon VPN côté Azure. +
+    J'ai besoin de savoir si le problème vient d'Azure (du service PaaS VNG) OU de mon VPN on-premises
+        
+        *** Le bon réflexe et la 1ere chose à faire est d'aller dans Service Health pour visualiser si sur la région où j'ai déployé mon VPN côté Azure, le service n'est pas tombé.
+        
+        *** Si ce n'est pas le cas, on peut se demander s'il n'y aurait pas un *problème de configuration du VPN côté Azure* : est-ce que par exemple la PSK de mon VPN Azure ne serait pas différente de celle de mon VPN on-premise ? +
+        -> Le service VPN troubleshoot permet de vérifier cela : 
+            **** vous sélectionnez la VNG ou connexion que vous voulez tester, 
+            **** ainsi qu'un compte de stockage qui va contenir tous les résultats des tests effectués par Microsoft
+            **** puis, en cliquant sur "Start troubleshooting", Azure va tester l'efficience du VPN. +
+            -> En fonction du résultat, vous pourrez éliminer la piste du problème VPN côté Azure +
+            image:AZ-104_supervision_32.jpg[]
+
+=== AZ-104 EP06 : TO BE COMPLETED
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1673,6 +1937,7 @@ ARS:: Azure Route Server
 ASA:: Adaptive Security Appliances is a piece of cybersecurity hardware sold by Cisco
 ASR:: Azure Site Recovery
 BGP:: Border Gateway Protocol
+CSP:: Cloud Service Provider
 DC:: Domain Controller (pour un AD)
 DRP:: Data Recovery Plan
 FQDN:: Fully Qualified Domain Name
@@ -1683,9 +1948,12 @@ IKE:: Internet Key Exchange. Le protocole IKE est chargé de négocier la connex
 IPAM:: IP Address Management
 IPSec:: Internet Protocol Security
 ISMS:: Information Security Management Systems
+ITSM:: IT Service Management
+KQL:: Kusto Query Language
 LNG:: Local Network Gateway
 MACsec:: Media Access Control Security
 MARS:: Microsoft Azure Recovery Services
+MMA:: Microsoft Monitoring Agent
 MMC:: Microsoft Management Console
 MX:: Mail eXchanger. A mail exchanger record (MX record) specifies the mail server responsible for accepting email messages on behalf of a domain name. It is a resource record in the Domain Name System (DNS).
 NIC:: Network Interface
@@ -1701,6 +1969,7 @@ RPO:: Recovery Point Objective
 RTO:: Recovery Time Objective
 RSV:: Recovery Service Vault
 SA:: Security Association
+SCOM:: System Center Operations Manager
 SKU:: *Stock-Keeping Unit* (SKU) is a generic inventory term, that allows to represent the different shapes of the product.
 SNAT:: Source Network Address Translation
 SSPR:: Self-Service Password Reset
