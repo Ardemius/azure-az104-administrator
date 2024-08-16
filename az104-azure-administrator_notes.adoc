@@ -1627,6 +1627,8 @@ image:AZ-104_load-balancer_33.jpg[]
 
 === AZ-104 EP05 : Supervision et Azure Monitor
 
+URL vidéo PHILIT : https://www.youtube.com/watch?v=e00sKrTitaI&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=5
+
 * *Azure Monitor* est un service "couteau suisse" qui contient plusieurs autres services : 
     ** Azure Network watcher
     ** les alertes (Azure Alerts)
@@ -1867,8 +1869,291 @@ image:AZ-104_supervision_25.jpg[]
             -> En fonction du résultat, vous pourrez éliminer la piste du problème VPN côté Azure +
             image:AZ-104_supervision_32.jpg[]
 
-=== AZ-104 EP06 : TO BE COMPLETED
+=== AZ-104 EP06 : Gouvernance & Réseau (Private Link)
 
+URL vidéo PHILIT : https://www.youtube.com/watch?v=GngtOaDCb_g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=6
+
+.Constat "malheureux" : on s'occupe souvent de la gouvernance trop tard...
+[NOTE]
+====
+* Constat "malheureux" : c'est souvent une fois que les workloads ont été migrés dans le Cloud public que l'entreprise va prendre en compte la gouvernance 😥
+
+* -> Normalement, la *gouvernance* devrait se réfléchir *AVANT la migration*
+====
+
+* Entre autres choses, la gouvernance c'est :
+
+    ** réfléchir à *comment administrer la solution* dans le Cloud public ?
+    ** comment on va *gérer les accès de nos utilisateurs à nos ressources* dans le Cloud ?
+    ** *QUI fait QUOI et A QUEL MOMENT* dans votre entreprise ?
+    ** la *maîtrise des coûts*, comment on va gérer les coûts ? (je dois être "accountable" de ce que je déploie dans le Cloud public Azure)
+    ** la *maîtrise de l'aspect compliance* (comme le respect des lois et réglementations nationales et régionales)
+
+-> Microsoft met à notre disposition plusieurs outils pour adresser ce sujet de gouvernance.
+
+==== Management Groups
+
+-> Documentation officielle de Microsoft sur les Management Groups : https://learn.microsoft.com/en-us/azure/governance/management-groups/overview
+
+* Les Management Groups sont un *scope de gouvernance* au-dessus des subscriptions : +
+Management Groups -> Subscriptions -> Resource Groups -> Resources
+
+image::AZ-104_gouvernance-reseau_01.jpg[]
+
+* Les Managements Groups ont 3 principaux intérêts : 
+    
+    ** *Diffuser des droits d'accès (RBAC)* sur les subscriptions (et les RG et les ressources) +
+    -> Pas besoin de passer sur chaque subscription pour y définir des droits identiques, il suffit de le faire au niveau de leur Management Group d'où ces droits seront *propagés* (par *héritage*) aux niveaux inférieurs.
+    
+    ** *Gérer les coûts* par service dans mon entreprise
+        *** Exemple : dans le schéma précédent, je peux consulter tous les coûts associés au MG Marketing via le portail Azure.
+
+    ** *Diffuser des Policies* : ensemble de paramètres (qui peuvent être contraignants) qui vont être appliqués à des ressources dans Azure
+
+    ** Un autre intérêt en plus des 3 premiers : *accéder aux Activity Logs* au niveau d'un Management Group, donc à tout ce que font les utilisateurs sur les subscriptions contenues.
+
+-> Le *Root Management Group* est associé à votre Tenant Azure, il ne peut y en avoir qu'un et représente le plus haut niveau hiérarchique.
+
+* Il peut y avoir *au maximum 6 niveaux de hiérarchie* entre un Root Management Group et une subscription.
+    ** Le Root Management Group et la subscription de plus bas niveau ne comptent pas dans ce total de 6 niveaux (ils font office de "niveau 0" et "niveau 7")
+
+* 1 subscription ne peut PAS faire partie de plusieurs Management Groups
+
+* Dans une entreprise, *par Tenant*, il est possible d'avoir *jusqu'à 10 000 Management Groups*
+
+*DEMO : Management Groups*
+
+image::AZ-104_gouvernance-reseau_02.jpg[]
+
+* Les Management Groups sont disponibles dans le portail Azure en cherchant "Management Groups"
+* Dans cet exemple, Philippe est sur son tenant "The Lord of the Rings"
+* Le "Root Management Group" de ce tenant est "Tenant Root Group"
+* Ce dernier contient : 
+    ** 4 subscriptions directement sous lui
+    ** 1 Management Group "IT-LOTR" contenant lui-même 2 subscriptions
+
+* Avec "Create" je peux créer un nouveau Management Group, nommé "Marketing" ici : +
+image:AZ-104_gouvernance-reseau_03.jpg[]
+
+* Une fois créé, il est possible de lui ajouter des subscriptions déjà existantes via "Add subscription" +
+image:AZ-104_gouvernance-reseau_04.jpg[]
+
+    ** Ici, on va ajouter la subscripion "Le Mordor (85)" à notre Management Group "Marketing". +
+    -> "Le Mordor (85)" appartenait auparavant au Management Group "Tenant Root Group", il est donc DEPLACE de ce MG vers le MG "Marketing" +
+    image:AZ-104_gouvernance-reseau_05.jpg[]
+    image:AZ-104_gouvernance-reseau_06.jpg[]
+
+* Au sein d'un Management Group, la *gestion des droits d'accès* (RBAC) est accessible via le *menu "Access Control (IAM)"* +
+image:AZ-104_gouvernance-reseau_07.jpg[]
+
+    ** Les droits d'accès que l'on va y définir vont être appliqués aux subscriptions contenues
+
+* La *gestion des coûts* est accessible via le *menu "Cost analysis"* +
+image:AZ-104_gouvernance-reseau_08.jpg[]
+    ** Tous les coûts associés aux subscriptions contenues sont agrégés ici
+
+* Les *Activity Logs* du Management Group sont accessibles via le *menu "Activity Log"* +
+image:AZ-104_gouvernance-reseau_09.jpg[]
+
+* Les *Policies* appliquées au Management Group sont accessibles via le *menu "Compliance"* +
+image:AZ-104_gouvernance-reseau_10.jpg[]
+
+==== Azure Policy
+
+image:AZ-104_gouvernance-reseau_11.jpg[]
+
+* Un Active Directory (AD) on-premises est stocké sur des contrôleurs de domaine (Domain Controller "DC")
++
+.Définition d'un Domain Controller
+[NOTE]
+====
+A domain controller is the server responsible for managing network and identity security requests. +
+It acts as a gatekeeper and authenticates whether the user is authorized to access the IT resources in the domain.
+====
+
+* Sur les DC, il va y avoir des objets : 
+    ** *User*
+    ** *Group*
+    ** *Computer*
+    ** *UO* pour *Unité d'Organisation* : les UO vont contenir des objets des 3 types précédents
+
+* A ces UO, on va appliquer les *GPO* (*Group Policy Object*), à savoir des stratégies de groupes
+    ** Dans un AD on-premises, une GPO est *liée à une UO* et sert à *appliquer un ensemble de paramètres sur les objets* de cette dernière (users, groups et computers)
+
+    ** Ces paramètres peuvent être, par exemple : 
+        *** fond d'écran qui doit être le même pour tous les postes de l'entreprise
+        *** la stratégie de mot de passe : dans mon domaine AD, tout le monde doit avoir un mdp d'au minimum 10 caractères avec des chiffres, des lettres, etc. Et je retiens les 6 derniers mdp comme n'étant pas disponibles lors d'une réinitialisation de mot de passe.
+        *** le déploiement de logiciels
+
+* Les *Policy dans Azure* reposent sur le même principe que les GPO MAIS elles *s'appliquent uniquement* à des ressources Azure : 
+    ** Management Group
+    ** Subscription
+    ** Resource Group
+    ** ou des ressources individuelles
+
+* -> Donc une Azure Policy ne s'applique *PAS à des personnes*
+
+* 🔥 Une Azure Policy *ne tient PAS compte de vos droits en tant qu'utilisateur* 🔥
+    ** Exemple : Même si vous êtes Owner d'une subscription, donc avoir tous les droits sur celle-ci, une Policy peut vous interdire de créer des VMs en dehors de la région France Central
+
+* *3 comportements* sont possibles à la *création d'une Policy* pour l'appliquer à un MG, une subscription, un RG ou des ressources :
+
+    ** *Audit* : le comportement qu'il est toujours conseillé d'utiliser au préalable
+        *** L'Audit va uniquement vérifier si la Policy est respectée, et faire diminuer la note de compliance si ce n'est pas le cas. +
+        L'Audit va donc *juste fournir une information*, et n'aura aucun impact sur les resources en cas de non repect d'une Policy.
+    
+    ** *Deny* : Exemple "Je ne veux pas que les ressources soient créées en dehors de France Central". +
+    Cette Policy en Deny empêche la création de ressources même si l'utilisateur en a le droit (ex : même s'il est Owner de la subscription) +
+    Le Deny *s'applique donc à la création des ressources*
+
+    ** *Deploy if not exists* : *Toutes les 20 min*, Azure va exécuter cette Policy sur vos ressources existantes. +
+    Si la Policy n'est pas respectée, via des *Remediation Tasks*, Azure va faire en sorte de la *rendre compliant*.
+        *** Exemple : Policy "Si ma VM n'est pas backupée, alors je veux que tu la backupes" +
+        A sa création, ma VM est créée SANS backup. A ce moment, rien ne se passe. +
+        Par contre, 20 min plus tard, Azure détecte l'absence de backup et lance une tâche de remédiation qui va créer un backup sur cette VM, pour rendre la ressource compliant.
+
+* Une Policy est décrite par un *fichier JSON*, qui est appelé dans Azure une *Policy Definition*
+    ** Une Policy Definition va donc *checker un paramètre* puis appliquer l'un des 3 comportements Audit, Deny ou Deploy if not exist
+
+* Une *Initiative* regroupe un *ensemble de Policy qui ont le même but*. +
+C'est un conteneur qui contient plusieurs fichiers JSON représentant vos Policy. +
+image:AZ-104_gouvernance-reseau_18.jpg[width=600]
+
+*DEMO : Policy*
+
+    * Les *Azure Policy* et les *Initiatives* sont accessibles via le *menu "Policy"* du portail Azure +
+    image:AZ-104_gouvernance-reseau_12.jpg[]
+
+    * Dans Policy, les "Policy Definitions" sont accessibles via le menu "Definitions" : +
+    image:AZ-104_gouvernance-reseau_13.jpg[]
+
+    * Je vais pouvoir *ajouter une nouvelle Policy definition* via "+ Policy definition" +
+    image:AZ-104_gouvernance-reseau_14.jpg[width=800]
+
+        ** *Definition location* : Le *niveau dans la hiérarchie des Management Groups* où vous allez stocker votre Policy va avoir un impact sur les subscriptions sur lesquelles vous allez pouvoir l'appliquer.
+            *** Si vous choisissez le Root Management Group, la Policy sera applicable sur TOUTES les subscriptions du tenant. +
+            Si vous choisissez un MG plus bas dans la hiérarchie, la Policy ne pourra être appliquée que sur les subscriptions contenues dans la sous-arborescence de ce MG.
+
+        ** Exemple de contenu JSON de la Policy definition
+        image:AZ-104_gouvernance-reseau_15.jpg[width=800]
+
+            *** Microsoft met à disposition 2 moyens de récupérer des *exemples de Policy definition* : 
+                **** le *repo GitHub* https://github.com/Azure/azure-policy +
+                image:AZ-104_gouvernance-reseau_16.jpg[width=800]
+                **** Chercher une Policy "BuiltIn" de Microsoft via le menu "Definition" d'une Azure Policy et la fonctionnalité de *Search* : +
+                image:AZ-104_gouvernance-reseau_17.jpg[]
+
+.Explication de ce que représente un SKU (Stock Keeping Unit) dans Azure
+[NOTE]
+====
+* Philippe définit un SKU comme *la "puissance" associée à un service Azure*.
+
+* Par analogie, on peut également le voir comme *les différentes versions / modèles d'un même produit*.
+    ** Par exemple, je vais pouvoir acheter ma Google Pixel Tablet soit en version A avec 128 Go de mémoire, soit en version B avec 256 Go +
+    -> Un SKU plus "élevé" représente de meilleures caractéristiques pour mon service, et donc également un prix plus élevé.
+====
+
+==== Modèle RBAC dans Azure
+
+* L'*Azure Active Directory* (renommé Azure Entra ID) est un *annuaire* contenant des *users* et des *groups*
+    ** Les users de l'AAD vont être associés à un certain nombre de subscriptions
+    ** Les users déclarés dans votre tenant peuvent recevoir des droits sur ces subscriptions qui sont liées au tenant
+    ** Le tenant est donc rattaché à plusieurs subscriptions Azure, et une subscription Azure a comme référentiel d'identités le tenant.
+
+* Il est important de *distinguer* la *gestion des droits RBAC sur les ressources* Azure de *celle sur le tenant* lui-même. +
+-> Il s'agit de 2 gestions de droits différentes : rôles sur le tenant ET rôles sur les ressources
+
+.Azure AD roles pour le tenant
+image:AZ-104_gouvernance-reseau_19.jpg[width=600]
+
+.Azure RBAC roles pour les ressources Azure
+image:AZ-104_gouvernance-reseau_32.jpg[]
+
+* Pra exemple, dans le schéma ci-dessus, les rôles suivant sont *uniquement dédiés au tenant* : 
+
+    ** *Billing admin* : gestion de l'aspect facturation sur le tenant (comme vos licences P1, P2)
+    ** *Application admin* : pour pouvoir publier des applicatifs dans l'Azure Active Directory
+    ** *Global Admin* : le plus haut niveau de rôle, qui en plus de vous donner les droits des rôles précédents, vous permet de configurer la synchronisation entre votre AD on-premises et l'Azure AD, et d'inviter d'autres utilisateurs (Guest), etc.
+
+* -> Il est très important de comprendre qu'un *user peut être "Global admin" sur le tenant MAIS n'avoir AUCUN accès sur les ressources Azure du tenant*.
+    ** Les *rôles sur le tenant* s'appellent des *Azure AD roles*
+    ** Les *rôles sur les ressources Azure* s'appellement des *Azure RBAC roles*
+        *** Ces droits RBAC se configurent via le *menu "Access control (IAM)"* de la ressource ciblée (Management Group, Subscription, Resource Group, Resource)
+
+*DEMO : RBAC*
+
+    * Dans mon tenant, donc en cherchant "Azure Active Directory" (Azure Entra ID) sur le portail Azure : +
+    image:AZ-104_gouvernance-reseau_20.jpg[]
+
+    * je sélectionne un user : +
+    image:AZ-104_gouvernance-reseau_21.jpg[]
+
+    * Via le *menu "Assigned roles"*, je vais pouvoir *gérer ses Azure AD roles*, donc ses droits sur l'Azure AD *UNIQUEMENT* : 
+    image:AZ-104_gouvernance-reseau_22.jpg[]
+    image:AZ-104_gouvernance-reseau_23.jpg[]
+
+    * Via le *menu "Azure role assignments"*, je vais pouvoir *visualiser* (uniquement visualiser) ses *rôles RBAC* sur les ressources Azure : +
+    image:AZ-104_gouvernance-reseau_33.jpg[]
+
+        ** Ici je vois que l'utilisateur "philippe.paiola" a un rôle "Owner" sur un Management Group. +
+        Si je vais sur une subscription appartenant à ce MG, je retrouve bien, dans la console "Access control (IAM)", onglet "Role assignments", ce rôle "Owner" pour "philippe.paiola" qui est indiqué comme étant *hérité du scope "Management Group"*. +
+        image:AZ-104_gouvernance-reseau_34.jpg[]
+
+    * Si à ce même user, je voulais donner des *rôles RBAC sur des ressources Azure*, cela ne se ferait *PAS dans l'Azure AD*, mais, par exemple, dans un Resource Group via la *console "Access control (IAM)"* : +
+    image:AZ-104_gouvernance-reseau_24.jpg[width=400]
+
+        ** Via l'*onglet "Roles"* de cette console, je vais pouvoir également accéder aux *rôles built-in pré-créés par Microsoft* (type "BuildInRole") : 
+        image:AZ-104_gouvernance-reseau_25.jpg[]
++
+.3 rôles RBAC à connaître pour la certification AZ-104
+[NOTE]
+====
+* *Owner* : Grants full access to manage all resources, including the ability to assign roles in Azure RBAC.
+    ** Vous avez tous les droits sur cette ressource PLUS le droit de donner les droits RBAC à d'autres personnes de votre tenant
+
+* *Contributor* : 
+Grants full access to manage all resources, but does not allow you to assign roles in Azure RBAC, manage assignments in Azure Blueprints, or share image galleries.
+    ** Vous avez tous les droits sur cette ressource MAIS vous ne pouvez PAS donner de droits RBAC dessus à des tiers (*ni à vous-même* d'ailleurs)
+
+* *Reader* : View all resources, but does not allow you to make any changes.
+    ** Vous n'avez QUE des droits en lecture sur les ressources : vous ne pouvez pas les modifier, ni créer d'autres ressouces MAIS vous pouvez visualiser tous les paramètres d'une ressource
+    ** C'est un droit pratique par exemple *pour des auditeurs*.
+====
+
+    * Je vais retrouver ces droits quand je fais un *"Add role assignment"* via la console "Access control (IAM)" +
+    image:AZ-104_gouvernance-reseau_26.jpg[]
+    
+    * La *bonne pratique* est de *définir des droits RBAC sur des groups* plutôt que sur des users individuels car plus facile à manager.
+
+    * Si les rôles built-in proposés par Microsoft ne me conviennent pas, je peux *créer mes propres rôles custom* via un *"Add custom role"* dans la console "Access control (IAM)" +
+    image:AZ-104_gouvernance-reseau_27.jpg[] +
+    {sb}
+    Exemple avec la *création d'un custom role "adminsap"* auquel : 
+
+        ** Je vais *ajouter les permissions* dont j'ai besoin pour administrer des composants SAP : +
+        image:AZ-104_gouvernance-reseau_28.jpg[]
+        image:AZ-104_gouvernance-reseau_29.jpg[]
+
+        ** Je vais *définir un scope* à mon rôle : +
+        image:AZ-104_gouvernance-reseau_30.jpg[]
+            *** Par défaut le scope proposé est la subscription, mais on peut en choisir d'autres via "Add assignable scopes"
+
+        ** Dans l'*onglet "JSON"*, Azure m'a créé le fichier JSON correspondant à mon nouveau rôle custom : +
+        image:AZ-104_gouvernance-reseau_31.jpg[]
+
++
+.Custom roles à utiliser avec parcimonie
+[WARNING]
+====
+* Microsoft conseille d'utiliser les *custom roles* avec *parcimonie* car il *ne tient PAS ces derniers à jour*. 
+
+* Si demain un nouveau service Azure concernant SAP devait sortir, Microsoft mettrait à jour les built-in roles et ajouterait le rôle SAP requis MAIS il ne toucherait pas aux rôles custom. +
+-> C'est une des *limitations des custom roles*, *c'est à VOUS de les tenir à jour* dans le temps.
+====
+
+==== Cost Management
+
+TO BE COMPLETED 53:13
 
 
 
