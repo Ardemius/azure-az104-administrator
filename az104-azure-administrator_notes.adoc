@@ -2153,7 +2153,183 @@ Grants full access to manage all resources, but does not allow you to assign rol
 
 ==== Cost Management
 
-TO BE COMPLETED 53:13
+* Menu "Subscriptions" du portial Azure : coût actuel pour chaque subscription depuis le début du mois +
+image:AZ-104_gouvernance-reseau_35.jpg[]
+
+* Pour une *subscription spécifique*, le menu "Overview" donne le *coût mensuel courant* et une *prévision* du coût à la fin du mois : +
+image:AZ-104_gouvernance-reseau_36.jpg[]
+
+* Pour plus de détails, aller dans le *menu "Cost analysis"* qui propose des graphiques supplémentaires : +
+image:AZ-104_gouvernance-reseau_37.jpg[]
+
+    
+    ** *consommation par service* (service et NON ressource) : une ressource c'est par exemple Windows 2019, mais le service lui est Azure Virtual Machine et plusieurs VMs peuvent tourner dans la subscription
+    ** *coût par région*
+    ** *coût par resource group*
+
+    ** Il est également possible de *filtrer les coûts affichés par tag* : +
+    image:AZ-104_gouvernance-reseau_40.jpg[]
+
+* Via le *menu "Budgets"*, on peut *définir un budget* qui, quand un certain prorata est atteint (ici 100%), va donner lieu à la *création d'une alerte* (ici l'envoi d'un mail) +
+image:AZ-104_gouvernance-reseau_38.jpg[]
+image:AZ-104_gouvernance-reseau_39.jpg[]
+
+* Le *Cost Management* est maintenant disponible en tant qu'*App sur smartphone* (App "Azure" https://play.google.com/store/apps/details?id=com.microsoft.azure), Philippe a créé une vidéo YouTube Short pour l'expliquer :
+
+ifdef::env-github[]
+https://www.youtube.com/watch?v=IjSRjZk7ms4[vidéo de la présentation sur YouTube]
+endif::[]
+ifdef::env-browser[]
+video::IjSRjZk7ms4[youtube, width=640, height=480]
+endif::[]
+
+* Via le *menu "Billing profile invoices"*, on peut *configurer différents types d'alertes de facturation* que l'on peut ensuite recevoir par mail.
+
+==== Service Private Link (réseau)
+
+IMPORTANT: Il est très courant d'avoir des questions sur ce service lors de la certification AZ-104 !
+
+* Rappels : +
+image:AZ-104_gouvernance-reseau_41.jpg[width=600]
+
+    ** Quand on déploie une *VM dans Azure* (IaaS), elle a *TOUJOURS une NIC*, donc *obligatoirement une IP privée* et *facultativement une IP publique*
+
+    ** Les *services PaaS* ont eux : 
+        *** *toujours des IP publiques* : c'est la raison pour laquelle on ne peut pas leur donner n'importe quels noms, car Azure va créer des noms de domaine associés aux services PaaS, et ces noms de domaine vont être accessibles depuis une IP publique
+        *** *presque jamais une IP privée* : à l'exception des SQL Managed Instance et des Web App sur ASE (App Service Environment), soit 2 services sur les centaines de services PaaS disponibles sur Azure qui peuvent avoir une IP privée native en tant que service PaaS... +
+        Il y a toujours quelques exceptions, mais ce comportement est la norme.
+
+* *Azure Private Link* regroupe *3 fonctions en 1* : +
+image:AZ-104_gouvernance-reseau_42.jpg[]
+
+    1. *Customer Owned Services*
+    2. *Azure PaaS Services* : nous allons ici nous concentrer sur ce service *lié aux Private Endpoint*
+        *** C'est ce service qui est particulièrement ciblé par la certification AZ-104
+    3. *Partner Services*
+
+* La plupart des *services PaaS* (Storage Account, une BDD SQL, etc.) ont (quasi) toujours une *IP publique* et pas d'IP privée
+* Comme ils ont des IPs publiques, ils ont des *noms de domaine (NDD) publics*, rattachés à celles-ci.
+    ** Exemple : Un blob dans un Storage Account va avoir comme URL "xxx.blob.core.windows.net", pour une BDD managée l'URL sera "xxx.database.windows.net" 
+
+* DONC, quand un client crée une BDD managée, elle a une *portée publique*. +
+Et un client qui crée un Storage Account va avoir des données dessus qui potentiellement ont une portée publique puisqu'il y a un domaine de domaine public et une IP publique au service PaaS. +
+-> Pour adresser cette problématique, Microsoft a créé le service *Azure Private Link*
+
+    ** L'une des fonctions de Private Link est dédiée aux services PaaS (2️⃣ du schéma) et concerne les Private Endpoint. 
+
+.Définition d'un Private Endpoint
+[NOTE]
+====
+Un Private Endpoint est une *carte réseau*, donc une *NIC* (et donc une IP privée), à qui on a *adjoint une zone DNS privée* qui *pointe sur le nom de domaime public* de vos services PaaS.
+
+-> Le Private Endpoint est une fonctionnalité supplémentaire qui va permettre de rendre accessible des services PaaS via des IP privées.
+
+C'est la "révolution" apportée par le Private Endpoint : là où les services PaaS Microsoft étaient auparavant accessibles via des IP publiques et PAS des IP privées, avec le Private Endpoint ces services sont maintenant accessibles depuis des NIC, donc des IP privées positionnées dans des subnets qui eux-mêmes font partie de VNet.
+====
+
+[WARNING]
+====
+Le Private Endpoint *n'attribut PAS une IP privée* à un service PaaS !
+
+* -> Il permet juste à votre réseau on-premises ou à une ressource Azure d'accéder à un service PaaS via une IP privée MAIS cette IP privée n'est PAS rattachée à ce service.
+* Cette IP privée *rend accessible le service PaaS depuis celle-ci* en passant par la zone DNS privée qui pointe sur le nom de domaine public du service PaaS.
+====
+
+* Cela va permettre à une VM ou à votre réseau on-premises qui est raccordé, par exemple par une ligne ExpressRoute, d'accéder à l'IP privée représentée par la NIC (10.1.1.5 dans le schéma), et cette IP privée a une zone DNS privée qui pointe sur le nom de domaine public du service PaaS.
+
+[WARNING]
+====
+-> Tout ceci ne change rien à la portée publique par défaut du service PaaS (son IP publique existe toujours).
+
+* Pour supprimer cette portée publique, il faudra, dans le cas d'une Web App par exemple, désactiver l'accès public à la Web App dans le Firewall.
+    ** On va désactiver l'accès public MAIS cela ne va PAS supprimer l'IP publique du service.
+====
+
+*DEMO : Private Link*
+
+    * Quand je crée un *nouveau Storage Account*, comme expliqué précédemment, je ne peux pas renseigner n'importe quel "Storage Account Name" (je ne peux PAS commencer par une majuscule ou des caractères de ponctuation par exemple) +
+    image:AZ-104_gouvernance-reseau_43.jpg[width=800]
+
+    * Si on fait un *nslookup* de l'URL associée à ce Storage Account, ici "sademopp69.blob.core.windows.net" (nom de domaine associé aux services blob dans Azure), on voit que celui-ci a bien une IP publique : +
+    image:AZ-104_gouvernance-reseau_44.jpg[width=800]
+
+    * Si on se connecte en RDP à la VM Azure que l'on a utilisé dans les précédents exemples (w2k19) : +
+    image:AZ-104_gouvernance-reseau_45.jpg[width=600]
+    image:AZ-104_gouvernance-reseau_46.jpg[]
+
+    * cette VM se connecte au Storage Account via son IP publique, ce que l'on peut de nouveau vérifier à l'aide d'un nslookup depuis la VM.
+
+    * Via le *menu "Private link services"* du "Private Link Center" du portail Azure, *créons maintenant un Private Endpoint*, donc une carte réseau (NIC), qui va être déposé dans le même subnet que ma VM, pour lui permettre d'accéder au Storage Account *QUE par son IP privée* : +
+    image:AZ-104_gouvernance-reseau_48.jpg[]
+
+        ** Je fais attention de *créer la NIC dans la même région que ma VM* : +
+        image:AZ-104_gouvernance-reseau_49.jpg[width=800]
+
+        ** Parmi la liste de tous les services PaaS concernés par le Private Endpoint, je choisis les "Storage Account" (Resource type) : +
+        image:AZ-104_gouvernance-reseau_50.jpg[width=800]
+        
+        ** Et dans ces Storage Account, celui qui m'intéresse est "sademopp69" (Resource), créé à l'instant, et plus particulièrement l'hébergement de blob (Target sub-resource) : +
+        image:AZ-104_gouvernance-reseau_51.jpg[width=800]
+
+        ** Il faut ensuite indiquer *OU mettre la carte réseau* (NIC), à savoir *dans le VNet de ma VM* : +
+        image:AZ-104_gouvernance-reseau_52.jpg[width=800]
+
+        ** Là Azure va proposer de *créer dans mon Resource Group la zone DNS privée* qui servira pour la résolution de nom : +
+        image:AZ-104_gouvernance-reseau_53.jpg[width=800]
+
+    * -> Créer un Private Endpoint prend plusieurs minutes
+
+    * Maintenant que le *Private Endpoint est créé*, on va *créer une nouvelle VM* dans Azure (très rapide) que l'on va mettre *dans les mêmes VNet et subnet que ce dernier* : 
+    image:AZ-104_gouvernance-reseau_54.jpg[width=800]
++
+[NOTE]
+====
+Se connecter la 1ere fois à une VM qui vient d'être créée est toujours plus long car il faut *créer le profil utilisateur*.
+====
+    
+    * Une fois sur cette nouvelle VM, quand je ferai un nslookup sur le nom de domaine public de mon Storage Account (xxx.blob.core.windows.net), celui-ci va me *renvoyer l'IP privée du Private Endpoint*
+
+        ** Mais pour d'autres machines, en dehors du VNet du Private Endpoint, ce sera toujours l'IP publique qui sera remontée par un nslookup sur le nom de domaine public du Storage Account : +
+        image:AZ-104_gouvernance-reseau_55.jpg[width=600]
+            *** Sur ce dernier screenshot, le nslookup est toujours fait "depuis chez Philippe", donc hors du VNet du Private Endpoint, raison pour laquelle c'est toujours l'IP publique qui est remontée (car je n'accède pas à la carte réseau du Private Endpoint)
+            *** PAR CONTRE, maintenant que le *private link a été créé*, on voit qu'un *2nd alias (2nd nom de domaine) pour le service blob du Storage Account* est apparu *"sademopp69.privatelink.blob.core.windows.net"*
+
+    * Maintenant, pour *fermer l'accès public au Storage Account*, aller dans le portail Azure sur le Storage Account, dans le *menu "Networking"* où il est possible de *désactiver le "Public network access"* +
+    image:AZ-104_gouvernance-reseau_56.jpg[]
+        
+        ** Il est également possible d'*utiliser un firewall*, qui est associé au Storage Account, en choisissant *"Enabled from selected virtual networks IP addresses"* comme "Public network access" : +
+        image:AZ-104_gouvernance-reseau_57.jpg[]
+            
+            *** Ce dernier permet de *préciser les accès externes qui sont autorisés*
+
+[NOTE]
+====
+-> Dans *tous les services PaaS* il existe des *firewall configurables*.
+====
+
+    * De nombreux clients préfèrent, principalement pour des raisons de sécurité / confidentialité, accéder à les services PaaS à l'aide d'IP privées plutôt que d'IP publiques.
+        ** Exemple avec un BDD SQL managée par Microsoft (SQL Database), préférez-vous y accéder par une IP publique ou une IP privée ? Plutôt une IP privée non ? 😉
+
+    * CONCLUSION de la démo :
+
+        ** Souvent on dit qu'on *"fait du Private Endpoint dans Azure"*. C'est un *abus de langage*.
+
+            *** -> Pour être précis sur les termes, *on utilise le service Private Link*
+            *** qui *regroupe plusieurs fonctionnalités*, 
+            *** dont celle d'*accéder à un service PaaS via une NIC*, 
+            *** et cette possibilité vous est *offerte par la création d'un Private Endpoint*
+
+        ** Dans le Resource Group déclaré, on va pouvoir retrouver : +
+        image:AZ-104_gouvernance-reseau_58.jpg[]
+
+            *** Le *Private Endpoint*
+            *** *La NIC de celui-ci*, NIC qui correspond à une IP privée, celle qui va être renvoyée par le nslookup une fois que le Private Endpoint aura été déployé +
+            image:AZ-104_gouvernance-reseau_59.jpg[]
+
+            *** et *la zone DNS privée*, qui pointe vers le nom de domaine public de mon service PaaS (ici notre Storage Account) +
+            image:AZ-104_gouvernance-reseau_60.jpg[]
+
+
 
 
 
@@ -2220,6 +2396,7 @@ ABS:: Azure Backup Server
 ACU:: Azure Compute Units. Notion used for Web Apps service plans to "give a number" to the pair processing speed / memory (like 100 ACU, 200 ACU, etc.)
 ARS:: Azure Route Server
 ASA:: Adaptive Security Appliances is a piece of cybersecurity hardware sold by Cisco
+ASE:: App Service Environment
 ASR:: Azure Site Recovery
 BGP:: Border Gateway Protocol
 CSP:: Cloud Service Provider
@@ -2241,6 +2418,7 @@ MARS:: Microsoft Azure Recovery Services
 MMA:: Microsoft Monitoring Agent
 MMC:: Microsoft Management Console
 MX:: Mail eXchanger. A mail exchanger record (MX record) specifies the mail server responsible for accepting email messages on behalf of a domain name. It is a resource record in the Domain Name System (DNS).
+NDD:: Nom De Domaine
 NIC:: Network Interface
 NSG:: Network Security Group
 NVA:: Network Virtual Appliance
