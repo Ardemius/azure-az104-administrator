@@ -1394,6 +1394,21 @@ image:AZ-104_load-balancer_06.jpg[width=600]
     ** -> Si les DC d'une AZ brûlent, il ne faut pas qu'il puisse s'étendre aux DC des autres AZ (cas malheureux d'OVH ces dernières années)
 
 * L'idée est que dans 1 région on puisse perdre 1 AZ MAIS pas les 2 autres
+
+* Pour se faire une idée des data centers Azure de Microsoft : 
+
+ifdef::env-github[]
+https://www.youtube.com/watch?v=ut1-qTlusnA[vidéo : Azure Datacenter | A tour to Microsoft Azure Datacenter]
+endif::[]
+ifdef::env-browser[]
+video::ut1-qTlusnA[youtube, width=640, height=480]
+endif::[]
+
+* Dans la vidéo précédente, on nous montre une *AZ* (notée Z1 ci-dessous) avec ici *4 data centers* : +
+image:AZ-104_storage-account_04.jpg[]
+
+* Sur cette autre image, on voit maintenant *2 AZ bien séparées d'une distance minimale* avec des routes coupe-feu et autres mesures de protections physiques : +
+image:AZ-104_storage-account_05.jpg[]
 ====
 
 Spécificité de l'Azure Load Balancer en *Standard* (donc PAS disponible en Basic) : +
@@ -2329,6 +2344,152 @@ Se connecter la 1ere fois à une VM qui vient d'être créée est toujours plus 
             *** et *la zone DNS privée*, qui pointe vers le nom de domaine public de mon service PaaS (ici notre Storage Account) +
             image:AZ-104_gouvernance-reseau_60.jpg[]
 
+=== AZ-104 EP07 : Storage Account
+
+URL vidéo PHILIT : https://www.youtube.com/watch?v=VnVkfxUF1JQ&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=7
+
+Sommaire du cours : 
+
+    * *Storage Account* : services, réplications, performances
+        ** le "disque dur" de vos données dans le Cloud public Azure
+
+    * *Blob* : niveau d'accès, lifecycle, immutable
+    * *Sécurité des données* : SSE, SAS, SAT, RBAC, etc.
+    * *Azure Files*
+    * *AZCopy*, *Import / Export* & *Storage Explorer*
+        ** AZCopy est le successeur de RoboCopy et XCopy
+
+==== Azure Storage Account
+
+* *3 types de données* peuvent être stockées dans un *compte de stockage* : +
+image:AZ-104_storage-account_01.jpg[]
+
+    ** des *données structurées* : typequement, les tables d'une BDD, avec un format qui est toujours le même
+    ** des *données semi-structurées* : comme du XML, JSON, YAML
+    ** des *données non-structurées* : tout ce qui est blob (jpg, Powerpoint, Word, etc.) et qui est toujours stocké dans un container au sens de dossier / répertoire et NON de container Docker. +
+    Le blob peut lui être vu comme l'équivalent d'un fichier.
+        *** On a donc : +
+        Blob (~*fichier*) CONTENU DANS un container (~*dossier / répertoire*) CONTENU DANS un Storage Account (l'équivaleut du *"C:\"* de l'Explorateur Windows)
+
+* Le Storage Account propose *4 services* (plus un 5e, les *managed disks* dont nous ne parlerons pas tout de suite) : +
+image:AZ-104_storage-account_02.jpg[]
+
+    1. *Service Container* (dossier) à base de *blobs* (fichier) : images, documents, audio, les Activity Logs de votre OS, etc.
+
+    2. *Service Table* : à base de clés, valeur et en lien avec tout ce qui SQL
+
+    3. *Service Queue* : j'ai des images uploadées sur un site web, et au fur et à mesure qu'elles sont uploadées, j'ai un traitement qui va les redimensionner pour les faire correspondre au site web. +
+    J'ai donc ici une queue, ou *file d'attente*. Plus la file est remplie, plus il y a de temps d'attente pour le traitement des images. +
+    -> Donc plus la file d'attente est faible meilleure est l'expérience utilisateur.
+        ** Avec des concepts comme le *FIFO* (First In First Out) : la 1ere image uploadée va être la 1ere à être redimensionnée.
+
+    4. *Service Azure Files* : Tout ce qui est partage réseau, avec les protocoles *SMB* (Server Message Block) ou *NFS* (Network File System). +
+    Ce qui permet, derrière un path du type *"\\<nom du Storage Account>\<nom du partage>"*, d'accéder en SMB ou en NFS à votre Storage Account au *format Azure Files*. +
+    -> Il s'agit donc d'un *service de partage réseau managé par Microsoft*.
+
+-> Pour la *certification AZ-104*, il faut connaître le *Service Container* et le *Service Azure Files*.
+
+.Question : Peut-on monter un lecteur réseau sur un blob dans un container ? 
+[NOTE]
+====
+* C'est possible si le blob est un VHD (Virtual Hard Disk) qui contient une VM. +
+Dans ce cas, sur cette VM il est possible de monter un partage réseau (un partage SMB).
+
+* Par contre, en faisant ainsi, on ne bénéficiera PAS du service PaaS. +
+-> Si on veut avoir un *service managé dans Azure à base de SMB ou de NFS*, il faut passer par *Azure Files*.
+====
+
+* Suivant nos use cases, il ne sera pas systématiquement nécessaire d'avoir un Storage Account proposant les 4 (5) services précédents. +
+Aussi Azure propose-t-il *différents types de Storage Account* pour *cibler uniquement les besoins identifiés* : +
+image:AZ-104_storage-account_03.jpg[]
+
+    ** *StorageV2* : le choix *par défaut* à la création du Storage Account : une technologie qui va contenir les 4 (5) précédents services.
+        *** Ce type de Storage Account permet donc de gérer des données de tous types : structurées, semi-structurées, non structurées
+
+    ** *BlobStorage* et *Block blog storage* pour utiliser uniquement les *blobs du service Container*
+
+        *** Les blobs peuvent être soit page blob, soit block blob, soit append blob
+        *** Un *appenb blob* est un blob auquel Azure va typiquement devoir *accéder à haute fréquence en lecture et écriture* : par exemple, pour tout ce qui est *Activity Logs* du Storage Account, ou d'une VM (Azure est toujours en train d'écrire dedans)
+        *** Les *block blobs* sont les blobs les plus communs, pour des *tailles de fichiers standards*
+        *** Les *page blobs* sont réservés aux *fichiers très volumineux*, plusieurs Go ou plusieurs To
+
+    ** *File Storage* quand on va veut faire uniquement du *partage réseau*
+
+    ** *Différence entre Storage (general purpose v1) et StorageV2 (general purpose v2)* : 
+        *** Storage v1 est l'ancienne technologie historique dans Azure, que l'on ne devrait normalement plus rencontrée et qui est beaucoup plus limitante que la v2 : 
+            **** Il y a par exemple beaucoup plus de type de réplications possibles avec un storage v2
+        *** -> Moralité : *choisissez toujours du StorageV2 à la place du v1*
+
+.Question : Quel serait le service le plus approprié pour du transfert de fichiers via SFTP ?
+[NOTE]
+====
+-> Azure propose du SFTP sur un Storage Account au format Blob
+====
+
+    ** La technologie du compte de stockage va également permettre de disposer de *plus ou moins d'options de réplication*
+
+.Rappel : Availability Zone (AZ)
+[NOTE]
+====
+* 1 région Azure possède *soit 3 Availability Zones (AZ) soit PAS DU TOUT*.
+* Les AZ sont *distantes de plusieurs kms* et *regroupent chacune plusieurs data centers* (DC). +
+* Le principe est que si 1 AZ entière tombe (incendie, inondation, etc.), les 2 autres zones ne sont pas forcément touchées.
+====
+
+* Les *6 méthodes de réplication* dans un Storage Account : +
+image:AZ-104_storage-account_06.jpg[]
+
+    ** *LRS* (*Locally Redundant Storage*) : 3 copies synchrones de vos données dans le même data center d'une région
+        *** C'est Microsoft qui choisit le data center, PAS le client
+    {lb}
+
+    ** *ZRS* (*Zone-Redundant Storage*) : 3 copies synchrones de la donnée dans 3 data centers chacun dispatché dans l'1 des 3 AZ de la région.
+        *** C'est de nouveau Microsoft que choisit le data center où vos données seront copiées dans chacune des 3 AZ
+    {lb}
+
+    ** *GRS* (*Geo-Redundant Storage*) : 6 copies de la donnée dont : 
+        *** 3 copies synchrones en LRS dans 1 DC de la région primaire
+        *** ET 3 copies synchrones en LRS dans 1 data center de ma 2nd région
+            **** Cette 2nd région est souvent la région "pair" de la 1ere, à savoir la région dite "de bascule". On parlera également de "Primary region" et de "Secondary Region"  +
+            -> Par exemple, la région "pair" de North Europe est West Europe (et réciproquement)
+        *** *Ces 2 séries de 3 copies étant asynchornes* l'une par rapport à l'autre.
+    {lb}
+
+    ** *GZRS* (*Geo-zone-redundant storage*) : 6 copies de la donnée dont : 
+        *** 3 copies synchrones en ZRS dans la région primaire
+        *** ET 3 copies synchrones en LRS dans la 2e région
+        *** *Ces 2 séries de 3 copies étant asynchornes* l'une par rapport à l'autre.
+    {lb}
+
+    ** *RA-GRS* (*Read-Access Geo-Redundant Storage*) et *RA-GZRS* (*Read-Access Geo-zone-redundant storage*) : Il s'agit des méthodes GRS et GZRS en "Read-Access" (RA)
+        
+        *** Ce *"Read-Access"* signifie qu'*à tout moment on a accès en lecture seule à la 2nd région*, via une URL communiquée par Microsoft.
+        *** Contrairement au *GRS* et *GZRS* où ce n'est *QUE quand vous basculez (lors d'un failover) dans la 2nd région* que vous aurez *accès en lecture ET en écriture* à vos données dans celle-ci.
+
+            **** Le failover de la région primaire vers la région secondaire est déclenché soit par les équipes de Microsoft si on a détecté que la région est tombée (par exemple), soit manuellement par le client.
+            **** Une fois que la région primaire est de nouveau up, on peut alors effectuer un *failback*, à savoir de repasser les données dans la région primaire.
+
+        *** Cas d'usage : 
+
+            **** Vous avez un *audit* sur un logiciel de compatibilité et les auditeurs ont besoin d'accéder en lecture aux informations de celui-ci. +
+            Plutôt que d'accéder au Storage Account de la région primaire, *vous leur donnerez accès au Storage Account de la région secondaire* qui contient les données répliquées de manière asynchrone depuis la région primaire. +
+            -> Cela permet de ne pas impacter l'environnement de PROD des utilisateurs.
+
+            **** Vous voulez une *haute disponibilité* de votre application et qu'au cas où la région primaire tombe, on puisse basculer les utilisateurs sur la région secondaire afin qu'ils puissent *accéder à l'application en lecture seule* (fonctionnement dégradé) *SANS avoir besoin de déclencher un failover*.
+{lb}
+
+* Plus la méthode de réplication va contenir de réplicas de vos données, plus la donnée va être chère à répliquer.
+    ** Car on va devoir payer la lecture / écriture d'un 2e Storage Account dans une 2nd région, la bande passante, etc.
+    ** Donc la *méthode de réplication la moins chère* dans Azure est bien le *LRS* : que 3 copies de la données dans 1 seul data center.
+        *** Avec le LRS, on a donc une moins bonne disponibilité des données, le SLA sera moins élevé, MAIS le coût sera plus faible par rapport aux données brutes stockées dans les data center Microsoft.
+
+[TIP]
+====
+Voir également la documentation Learn Microsoft sur le Azure Storage redundancy pour plus d'informations : +
+https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy
+====
+
+TO BE COMPLETED
 
 
 
@@ -2345,6 +2506,17 @@ Se connecter la 1ere fois à une VM qui vient d'être créée est toujours plus 
 
 
 
+
+
+
+== Définitions et explications diverses
+
+* Pour un *service en "Preview"* sur Azure : 
+    ** *Pas de SLA associé* : en cas d'indisponibilité du service, il n'y a pas de pénalité financière côté Microsoft, aucun avoir n'est dû au client
+    ** *Pas d'engagement de support* de Microsoft (c'est du "best effort") : il est donc déconseillé d'utiliser le service en PROD.
+    ** *Le service est souvent gratuit* durant toute la durée de la Preview.
+
+    ** -> Après cette phase de Preview le *service "confirmé"* passera en *General Availability*, et deviendra dès lors payant (très souvent) avec un SLA associé.
 
 == Ressources
 
@@ -2402,6 +2574,7 @@ BGP:: Border Gateway Protocol
 CSP:: Cloud Service Provider
 DC:: Domain Controller (pour un AD)
 DRP:: Data Recovery Plan
+FIFO:: First In First Out
 FQDN:: Fully Qualified Domain Name
 GPO:: Group Policy Object
 GRS:: Geo-Redundant Storage
@@ -2413,12 +2586,14 @@ ISMS:: Information Security Management Systems
 ITSM:: IT Service Management
 KQL:: Kusto Query Language
 LNG:: Local Network Gateway
+LRS:: Locally Redundant Storage
 MACsec:: Media Access Control Security
 MARS:: Microsoft Azure Recovery Services
 MMA:: Microsoft Monitoring Agent
 MMC:: Microsoft Management Console
 MX:: Mail eXchanger. A mail exchanger record (MX record) specifies the mail server responsible for accepting email messages on behalf of a domain name. It is a resource record in the Domain Name System (DNS).
 NDD:: Nom De Domaine
+NFS:: Network File System
 NIC:: Network Interface
 NSG:: Network Security Group
 NVA:: Network Virtual Appliance
@@ -2434,6 +2609,7 @@ RSV:: Recovery Service Vault
 SA:: Security Association
 SCOM:: System Center Operations Manager
 SKU:: *Stock-Keeping Unit* (SKU) is a generic inventory term, that allows to represent the different shapes of the product.
+SMB:: Server Message Block
 SNAT:: Source Network Address Translation
 SSPR:: Self-Service Password Reset
 SSTP:: Secure Socket Tunneling Protocol
