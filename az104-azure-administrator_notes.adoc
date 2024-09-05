@@ -57,6 +57,8 @@ Déroulement de la certification :
 Description précise des connaissances à posséder pour la certification par Microsoft : +
 https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RE4pCWy
 
+* Vidéo explicative "Le guide ultime des certifications Microsoft" de PhilIT : https://www.youtube.com/watch?v=qKwJRf6FSzw
+
 [NOTE]
 ==== 
 Pour plus d'informations sur la certification AZ-104 (nombre de questions, passing score, etc.), voir la description faite par *testprep training* : +
@@ -89,6 +91,7 @@ Ressources conseillées par PHILIT pour se préparer à la certification :
         ** Parcours de formation Microsoft Learn AZ-104 Microsoft Azure Administrator : +
         https://learn.microsoft.com/fr-FR/credentials/certifications/exams/az-104/
 
+    * Le *study guide* officiel de Microsoft : https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/az-104
     * Le blog de Thomas MAURER : https://www.thomasmaurer.ch/2020/03/az-104-study-guide-azure-administrator/
 
 === AZ-104 EP01 : Azure AD (AAD) & VNet
@@ -1835,7 +1838,9 @@ Le Log Analytics Workspace est le container qui *va contenir tous les logs remon
 ==== Azure Network Watcher
 
 * Ce service permet de *troubleshooter ce qui se passe sur vos réseaux virtuels Azure* (VNet)
-* Il est *automatiquement créé* dès lors que vous créez un VNet, sur la même région que le VNet
+
+* Il est *automatiquement créé*, et associé à un Resource Group "NetworkWatcherRG", dès lors que vous créez un VNet, sur la même région que le VNet
+    ** le RG *NetworkWatcherRG* est automatiquement créé par région lorsque le premier réseau virtuel (VNet) d'une région est créé.
 
 * Network Watcher est un "couteau suisse" *regroupant toute une série de services Azure* : 
 image:AZ-104_supervision_25.jpg[]
@@ -2211,7 +2216,7 @@ image:AZ-104_gouvernance-reseau_41.jpg[width=600]
 
     ** Les *services PaaS* ont eux : 
         *** *toujours des IP publiques* : c'est la raison pour laquelle on ne peut pas leur donner n'importe quels noms, car Azure va créer des noms de domaine associés aux services PaaS, et ces noms de domaine vont être accessibles depuis une IP publique
-        *** *presque jamais une IP privée* : à l'exception des SQL Managed Instance et des Web App sur ASE (App Service Environment), soit 2 services sur les centaines de services PaaS disponibles sur Azure qui peuvent avoir une IP privée native en tant que service PaaS... +
+        *** *presque jamais une IP privée* : à l'*exception des SQL Managed Instance et des Web App sur ASE* (App Service Environment), soit 2 services sur les centaines de services PaaS disponibles sur Azure qui peuvent avoir une IP privée native en tant que service PaaS... +
         Il y a toujours quelques exceptions, mais ce comportement est la norme.
 
 * *Azure Private Link* regroupe *3 fonctions en 1* : +
@@ -2222,7 +2227,7 @@ image:AZ-104_gouvernance-reseau_42.jpg[]
         *** C'est ce service qui est particulièrement ciblé par la certification AZ-104
     3. *Partner Services*
 
-* La plupart des *services PaaS* (Storage Account, une BDD SQL, etc.) ont (quasi) toujours une *IP publique* et pas d'IP privée
+* 🔥 La plupart des *services PaaS* (Storage Account, une BDD SQL, etc.) ont (quasi) toujours une *IP publique* et pas d'IP privée 🔥 
 * Comme ils ont des IPs publiques, ils ont des *noms de domaine (NDD) publics*, rattachés à celles-ci.
     ** Exemple : Un blob dans un Storage Account va avoir comme URL "xxx.blob.core.windows.net", pour une BDD managée l'URL sera "xxx.database.windows.net" 
 
@@ -2356,8 +2361,8 @@ Sommaire du cours :
     * *Blob* : niveau d'accès, lifecycle, immutable
     * *Sécurité des données* : SSE, SAS, SAT, RBAC, etc.
     * *Azure Files*
-    * *AZCopy*, *Import / Export* & *Storage Explorer*
-        ** AZCopy est le successeur de RoboCopy et XCopy
+    * *AzCopy*, *Import / Export* & *Storage Explorer*
+        ** AzCopy est le successeur de Robocopy et XCOPY
 
 ==== Azure Storage Account
 
@@ -2372,9 +2377,25 @@ image:AZ-104_storage-account_01.jpg[]
         Blob (~*fichier*) CONTENU DANS un container (~*dossier / répertoire*) CONTENU DANS un Storage Account (l'équivaleut du *"C:\"* de l'Explorateur Windows)
 
 * Le Storage Account propose *4 services* (plus un 5e, les *managed disks* dont nous ne parlerons pas tout de suite) : +
-image:AZ-104_storage-account_02.jpg[]
+image:AZ-104_storage-account_02.jpg[width=600]
 
     1. *Service Container* (dossier) à base de *blobs* (fichier) : images, documents, audio, les Activity Logs de votre OS, etc.
++
+.Ambiguïté sur l'usage du mot "container"
+[IMPORTANT]
+====
+-> Il y une ambiguïté sur l'usage du terme "container" dans la documentation et le portail Azure pour les Storage Account
+
+    * Concernant le service en tant que tel, il peut être appelé *"service container" OU "service blob"*
+    * En plus d'être le nom d'un service, *"container" représente également un "Resource type"* dans un Storage Account, que l'on peut également voir comme un niveau de hiérarchie parmi 3 (Service, Container, Object) dans le stockage : 
+
+        ** *Service* : Représente le service de stockage dans son ensemble (Blob, Table, Queue ou File).
+        ** *Container* : Un conteneur est une entité au sein d'un service Blob. Il sert à regrouper des blobs logiquement.
+            *** Un "container" est donc un conteneur (un regroupement) dans un service blob (ou service container 😅)
+        ** *Object* : Représente un objet individuel au sein d'un conteneur (blob), d'une table (entité) ou d'un partage de fichiers (fichier).
+
+En conclusion, garder en tête que "container" est à la fois un service (au sens où il fournit un ensemble de fonctionnalités spécifiques) et une ressource (au sein du service Blob).
+====
 
     2. *Service Table* : à base de clés, valeur et en lien avec tout ce qui SQL
 
@@ -2485,11 +2506,336 @@ image:AZ-104_storage-account_06.jpg[]
 
 [TIP]
 ====
-Voir également la documentation Learn Microsoft sur le Azure Storage redundancy pour plus d'informations : +
+Voir également la *documentation Learn Microsoft* sur le *Azure Storage redundancy* pour plus d'informations : +
 https://learn.microsoft.com/en-us/azure/storage/common/storage-redundancy
 ====
 
+*DEMO : création de Storage Account*
+
+    * Chercher "Storage account" dans le portail Azure ou via sa *Marketplace* : +
+    https://portal.azure.com/#view/Microsoft_Azure_Marketplace/MarketplaceOffersBlade/selectedMenuItemId/home +
+    image:AZ-104_storage-account_07.jpg[width=800]
+    image:AZ-104_storage-account_08.jpg[width=700]
+
+    * Par défaut le Storage Account a une *taille maximale de 5 Po*.
+        ** Mais (heureusement !) seul l'espace de stockage réellement consommé par vos données est facturé
+
+    * Par défaut, *par région et par subscription*, il est possible d'avoir jusqu'à *250 Storage Account*
+
+        ** Ces informations peuvent être retrouvées dans la documentation Learn de Microsoft décrivant les caractéristiques des Storage Account : +
+        https://learn.microsoft.com/en-us/azure/storage/common/scalability-targets-standard-account
+
+    * Le *Storage Account* est un *service PaaS* composé de 4 services, il va donc avoir *4 noms de domaine publics* : 
+        ** xxx.blob.core.windows.net : pour tout ce qui est blob
+        ** xxx.queue.core.windows.net : pour les files d'attente
+        ** xxx.table.core.windows.net : pour tout ce qui est BDD SQL, donc données structurées
+        ** xxx.file.core.windows.net : pour le partage SMB
+
+    * Le Storage Account doit être *unique sur TOUTES les régions*
+        ** Donc le *nom de domaine associé* va être *commun à toutes les régions Azure*
+        ** Le *nom du Storage Account* doit donc *être unique dans TOUT Azure* : je ne peux pas créer un autre Storage Account avec un nom déjà existant sur une autre région, idem pour un autre client d'Azure, il ne pourra pas non plus utiliser ce nom.
+        ** Exemple avec le service blog, l'URL va avoir la forme : +
+        http://<storageaccountname>.blob.core.windows.net/<container-name>
+
+    * *Performance* du Storage Account : 
+
+        ** *Standard* : pour les cas d'usage standard
+        ** *Premium* : c'est du *SSD* pour une *faible latence* et *beaucoup d'IOPS* (Input / Output Operations Per Second, le nombre d'opérations de lecture et d'écriture par seconde pour un système de stockage)
+            *** Le bon choix si on a besoin de performances élevées, mais coûte plus cher
+
+    * -> La *création d'un Storage Account* ne prend que *quelques secondes*.
+
+    * On voit que dans cet exemple, le Storage Account a bien été créé en *RA-GRS (Read-Access GRS)*
+    image:AZ-104_storage-account_09.jpg[]
+
+    * Pour rappel, pour la *certification AZ-104*, il sera avant tout question des services *Containers* et *File Shares* du Storage Account. +
+
+==== Service Containers (ou service blobs)
+
+* Un *container* est un *dossier ou répertoire dans lequel je vais mettre des blobs*
+* Un container a 3 niveau d'accès : 
+
+    ** *Private* (no anonymous access) : jamais d'accès anonyme pour pouvoir accéder aux blobs dans le container, il faudra passer par une SAS (Shared Access Signatures), une SAT (Shared Access Tokens), une Access Key (Clé d'accès du compte). +
+    -> Le container ne sera jamais anonyme, ni son contenu
+
+        *** *SAS* (Shared Access Signature) : Une URL sécurisée générée avec des paramètres spécifiques, permettant un accès délégué à des ressources de stockage pendant une durée limitée.
+        *** *SAT* (Shared Access Token) : Similaire à une SAS, mais généralement utilisée dans un contexte d'authentification OAuth 2.0. Elle fournit un jeton d'accès temporaire pour accéder à des ressources de stockage.
+        *** *Clé d'accès du compte* : La clé principale utilisée pour authentifier toutes les requêtes à un compte de stockage (souvent utiliser pour l'administration du Storage Account)
+
+    ** *Blob* (anonymous read access for blobs only) : Accès anonyme en lecture aux blobs qui seront dans le container, si vous en connaissez l'URL exacte.
+
+    ** *Container* (anonymous read access for containers and blobs) : Accès anynome en lecture au container et aux blobs associés.
+
+* Dans notre exemple, je vais créer un Container avec un *accès de type "Container"*
+    ** Donc, si quelqu'un connait l'URL de mon container et du blob, il pourra accéder à ce dernier +
+    image:AZ-104_storage-account_10.jpg[]
+    image:AZ-104_storage-account_11.jpg[]
+
+* J'upload une image (donc un blob, ici "Bureau.jpg") dans mon container nommé "images" +
+image:AZ-104_storage-account_12.jpg[]
+
+* Je dois donc pouvoir y *accéder via URL* dès lors que je connais le nom du blob ("Bureau.jpg"), le nom du container ("images") et le nom du Storage Account ("sademotwitch"), soit : \https://sademotwitch.blob.windows.core.net/images/Bureau.jpg
+    ** Cette URL peut également être trouvée en passant par les properties du blob : +
+    image:AZ-104_storage-account_13.jpg[]
+
+* *Par défaut*, ce fichier uploadé dans mon container est en *Access tier "Hot"*.
+image:AZ-104_storage-account_14.jpg[]
+
+    ** Azure va gérer *3 niveaux d'accès* (Access Tier) à ses données dans un Storage Account : 
+
+        *** *Hot* : pour des données accédées fréquemment (comme l'Activity Log d'une VM) où les données vont être lues et écrites plusieurs fois par minute
+
+        *** *Cool* : Pour des données que l'on souhaite conserver à long terme, mais qui ne seront accédées que de temps en temps (vous comptez en moyenne les conserver ~30 jours). Exemple : Vous êtes commercial et tous les mois vous faites une revue de votre pipe avec votre manager (on ouvre le même doc tous les mois)
+
+        *** *Archive* : vous vous engagez à ne pas accédez à la donnée pendant 180 jours (6 mois). Microsoft, via un robot, va donc prendre votre blob et l'archiver.
+            **** Pour pouvoir réaccéder à une donnée archivée, il faut la *réhydrater*, c'est à dire changer son Access Tier de "Archive" à "Cool" ou "Hot" +
+            -> "*Rehydrating* a blob from archive to Hot or Cool tier *can take several hours to complete*"
+            **** Et si on réhydrate la donnée avant la période de 180 jours, il va y avoir une *pénalité en termes de coût*.
+    
+    ** Cf la documentation officielle Azure (https://learn.microsoft.com/en-us/azure/storage/blobs/access-tiers-overview[]), il y aurait maintenant 4 niveaux d'accès, avec le "cold" entre cool et archive. +
+    Voici les descriptions fournies par Azure : +
+    image:AZ-104_storage-account_20.jpg[]
+
+        *** *Hot tier* - An online tier optimized for storing data that is accessed or modified frequently. The hot tier has the *highest storage costs*, but the *lowest access costs*.
+
+        *** *Cool tier* - An online tier optimized for storing data that is infrequently accessed or modified. *Data in the cool tier should be stored for a minimum of 30 days*. The cool tier has lower storage costs and higher access costs compared to the hot tier.
+
+        *** *Cold tier* - An online tier optimized for storing data that is rarely accessed or modified, but still requires fast retrieval. *Data in the cold tier should be stored for a minimum of 90 days*. The cold tier has lower storage costs and higher access costs compared to the cool tier.
+
+        *** *Archive tier* - An offline tier optimized for storing data that is rarely accessed, and that has flexible latency requirements, on the order of hours. *Data in the archive tier should be stored for a minimum of 180 days*.
+
+* -> Généralement, les données que l'on souhaite conserver moins de 30 jours sont en Hot, ~30 jours c'est du cool, et plus de 30 jours c'est de l'archive.
+* Il n'y a pas de différence de débit entre Hot et Cool, mais une différence de SLA.
+
+* Le niveau d'accès / Access Tier va avoir un impact dans 2 domaines : 
+
+    ** *sur le SLA* associé à l'accès à vos données : meilleur en Hot qu'en Cool
+    ** *sur le coût de stockage* de la donnée.
+
+        *** Exemples de *différences de coûts entre Access Tier Hot / Cool / Archive* via la calculatrice Azure : 
+            **** Coût de stockage de données "chaudes" / Hot (via la calculatrice Azure), 1 To : ~21,30$ / mois +
+            image:AZ-104_storage-account_16.jpg[]
+
+            **** Coût de stockage de données "froides" / Cool ("Niveau d'accès" : "A froid"), 1 To : ~15,56$ / mois 
+            **** Coût de stockage de données Archive ("Niveau d'accès" : "Archive"), 1 To : ~1,01$ / mois 
+
+* Au moment de la *création d'un Storage Account*, il est possible de *définir le niveau d'accès par défaut*, *Hot* ou *Cool*, des blobs contenus : +
+image:AZ-104_storage-account_15.jpg[]
+
+* Plutôt que de réaliser manuellement toutes les opérations associées à l'Access Tier, cette gestion du cycle d'accès aux données peut être automatisée via la fonctionnalité de *"Lifecycle management"* : 
+image:AZ-104_storage-account_17.jpg[]
+
+    ** Via cette fonctionnalité, on a la possibilité de créer des règles permettant, par exemple, d'automatiser le passage de l'Access Tier Hot to Archive : +
+    image:AZ-104_storage-account_18.jpg[width=500]
+    image:AZ-104_storage-account_19.jpg[width=500]
+
+* L'*immutabilité* est une fonctionnalité qui permet de protéger les blobs de vos containers de modification ou suppression non souhaitées. +
+Cette fonctionnalité est accessible via la mise en place de *policy*. +
+image:AZ-104_storage-account_21.jpg[]
+
+    ** Policy type *"Time-based retention"* : un blob placé dans un *container en immutable* via cette policy n'est accessible QUE en lecture : il ne pourra être ni modifié ni supprimé pendant la durée de rétention indiquée (7 jours dans l'exemple)
+        *** Durant ces 7 jours, on pourra toujours lire les blobs ou en ajouter d'autres dans le container, MAIS une fois ajoutés, ils ne seront plus modifiables ou supprimables pendant les 7 jours définis.
+
+    ** Policy type *"Legal Hold"* : les blobs déposés dans le container ne seront pas supprimables, mais seront modifiables. +
+    Il n'y a pas de limite de temps à cette fonctionnalité, qui dure tant que activée sur le container.
+        
+    ** Cette fonctionnalité est pratique pour stocker vos backups.
+        *** Exemple de Philippe d'une entreprise qui a été *attaquée par des hackers*, ces derniers ont supprimé toutes les sauvegardes. +
+        Avec une Immutable policy mise en place, *les blobs n'auraient PAS été supprimables*.
+
+* Le *Soft delete*, fonctionnalité accessible via le *menu "Data protection"* du Storage Account,  est une *"corbeille"* qui permettra à vos blobs d'être restaurés 7 jours après suppression. +
+image:AZ-104_storage-account_22.jpg[]
+
+* Depuis peu, il est également possible de *backuper les blobs* contenus dans un Storage Account (fonctionnalité accessible également via le *menu "Data protection"*). +
+image:AZ-104_storage-account_23.jpg[]
+    ** Ce backup utilisera le service de *Recovery Service Vault* (RSV).
+
+* Toutes les *données d'un Storage Account* sont *chiffrées au repos* au travers du service *Storage Service Encryption* (SSE) (voir le *menu "Encryption"* du Storage Account) +
+image:AZ-104_storage-account_24.jpg[]
+
+    ** *Par défaut*, la *clé de déchiffrement* est *stockée et managée par Microsoft* ("Microsoft managed keys")
+    ** MAIS il est également *possible de la gérer vous-même* ("Customer managed keys") et de la stocker dans un Key Vault (autre service managé de Microsoft)
+    ** SSE - chiffrement au repos : vos données sont chiffrées quand elles ne sont pas utilisées, et sont déchiffrées au moment où vous avez besoin de les lire ou les écrire.
+
+==== Access Keys, SAS, SAT et modèle RBAC
+
+Plusieurs moyens d'accéder à vos données dans un Storage Account : 
+
+    * *Access Keys* (menu "Access Keys" du Storage Account) : la méthode dite "bourrine" (un peu *l'équivalent d'un compte "root"* ou "super admin"), les Access Keys, au nombre de 2, *Key 1* et *Key 2*, donnent accès à l'intégralité des données dans votre Storage Account (blobs, queues, files, etc.), en lecture, écriture, modification. +
+    image:AZ-104_storage-account_25.jpg[]
+
+        ** *Microsoft déconseille donc d'utiliser une Key 1 ou Key 2* pour accéder aux données d'un Storage Account, et encore plus de coder une application qui aurait dans son code l'accès à un Storage Account via une Key 1 ou une Key 2
+        ** Si vraiment vous devez utiliser les Access Keys, utilisez la Key 1, et si elle est compromise, utilisez la Key 2 pour récupérer l'accès à vos données 
+
+    * *Shared Access Signature* (SAS, *menu "Shared access signature" du Storage Account*) : cette fonctionnalité va permettre de *partager un service* (blob, file, queue, table) et non plus l'intégralité du Storage Account. +
+    image:AZ-104_storage-account_26.jpg[]
+
+        ** On définit les *permissions autorisées* sur le service (lecture, écriture, suppression, ajout, etc.)
+        ** Une *plage de temps durant laquelle la SAS est valide* (et donc durant laquelle le service est partagé) via "Start and expiry date/time"
+        ** Les *IP autorisées* à partir desquelles la SAS peut être utilisée
+        ** Le *protocole autorisé* (HTTPS ou HTTPS ET HTTP) devant être utilisé pour se servir de la SAS
+
+        * A l'aide d'une des 2 Access Keys (prendre plutôt la Key 1), on va *générer une chaîne de connexion* ("Connection string"), qui va être basée sur la Key 1 mais ne va PAS la contenir (l'*Access Key* est utilisé pour *signer la chaîne de connexion*) : +
+        image:AZ-104_storage-account_27.jpg[]
+            ** Cette connection string va permettre de sécuriser l'accès au service sélectionné en respectant les contraintes définies (permissions, plage de temps, IP, protocole)
+
+    * *SAS au niveau du blob* : si maintenant je ne veux plus partager le container "images" mais le blob, je vais retrouver la *SAS au niveau du blob* lui-même, via son *onglet "Generate SAS"* : +
+    image:AZ-104_storage-account_29.jpg[]
+
+    * *Shared Access Token* (SAT, menu "Shared access tokens" du Container) : La SAT est *similaire à la SAS* MAIS elle est *associée à un Container unique*. +
+    image:AZ-104_storage-account_28.jpg[]
+
+        ** Via la fonctionnalité *"User delegation only"*, il est possible de déléguer le *renouvellement de la SAT* à l'utilisateur auquel on fournit son accès. +
+        Il ne pourra renouveler l'accès qu'*1 seule fois* : si par exemple la plage de temps est dépassée et qu'il a encore besoin d'accéder au Container du Storage Account, il pourra renouveler la SAT une seule fois.
+
+    * *"Access Control (IAM)"* : Sur un *container* ou directement un *Storage Account*, en fonction de *rôles qui auront été associés à votre compte AAD*, vous disposerez de certains droits sur ceux-ci.
+        ** Access Control (IAM) pour un container : +
+        image:AZ-104_storage-account_30.jpg[]
+        ** Access Control (IAM) pour un Storage Account : +
+        image:AZ-104_storage-account_31.jpg[]
+
+==== Service Azure Files (File Shares ou partages réseau)
+
+* Création d'un partage réseau (file share) "vip" : +
+image:AZ-104_storage-account_32.jpg[]
+
+* On va avoir la possibilité de *mapper ce partage réseau avec son poste de travail* via la *fonctionnalité "Connect"* : +
+image:AZ-104_storage-account_33.jpg[]
+
+* La méthode d'authentification *"Storage account key"* correspond à nos *Access Keys* (Key 1 ou Key 2) : +
+image:AZ-104_storage-account_34.jpg[]
+
+* Via le *bouton "Show Script"*, on peut afficher le *code Shell* (Powershell) associé au *mappage du partage réseau* : +
+image:AZ-104_storage-account_35.jpg[width=600]
+    ** Je vais ensuite pouvoir exécuter ce code dans Powershell (ou minimun les commandes de création des accès et de la lettre de lecteur) +
+    image:AZ-104_storage-account_36.jpg[]
+    ** Prérequis pour que cela fonctionne : que le port 445 soit ouvert sur son poste de travail
+    ** Et blague ou effet démo, ça ne marche pas dans l'exemple de Philippe... 😂 
+        *** -> probablement dû au VPN de Philippe (bon à savoir), la manipulation marche bien pour d'autres membres du cours
+
+* Il est également possible de créer des *snapshots* du File Share.
+    ** Cette fonctionnalité permet de créer des *copies en lecture seule* d'un partage de fichiers à un instant "t".
+    ** *Stockage incrémental* : Les instantanés ne copient pas l'intégralité des données du File Share. Seules les modifications apportées depuis le dernier snapshot sont stockées (gain d'espace de stockage).
+    ** -> Les snapshots ne remplacent pas une solution de backup complète. Ils doivent être utilisés en complément d'une stratégie de sauvegarde globale.
+
+* Et il est également possible de créer des *Backup* du File Share dans un *Recovery Service Vault* (RSV) : +
+image:AZ-104_storage-account_37.jpg[]
+    ** On peut donc avoir un partage réseau qui est monté sur son poste de travail de son entreprise et qui en plus est backupé dans le service PaaS Azure Backup.
+
+==== Utilitaire : AzCopy
+
+.Souvenirs
+[NOTE]
+====
+Dans les années 2000, sur Windows NT / 2000, on trouvait les commandes XCOPY ou Robocopy qui permettaient la copie de fichiers entre différentes partitions d'un même serveur ou d'un même poste de travail.
+====
+
+* AzCopy est disponible sur Linux, Windows et MacOS
+
+image:AZ-104_storage-account_38.jpg[]
+
+* AzCopy est le *successeur de XCOPY / Robocopy* et va vous permettre, *depuis votre poste de travail* : 
+    ** de *copier des données dans un Storage Account* 
+    ** ou de *piloter la copie de données entre 2 Storage Accounts*
+
+* Process pour une *copie du poste de travail vers un container dans un Storage Account* : 
+
+    1. `azcopy login` +
+    image:AZ-104_storage-account_39.jpg[]
+
+    2. Aller sur l'URL indiquée (\https://microsoft.com/devicelogin) et donner le code fourni
+    3. Vous allez devoir vous identifier avec votre compte Microsoft (un compte dans l'AAD), avec une demande d'approbation via smartphone (du MFA). +
+    Une fois fait, vous êtes connecté : +
+    image:AZ-104_storage-account_40.jpg[]
+
+    4. Ne reste plus qu'à copier les données à l'aide de `azcopy copy <FROM> <TO>`
+        ** <FROM> : la source est un *path de son poste de travail* (ici `c:\users\phpaiola\`)
+        ** <TO> : la cible est un *container d'un Storage Account*, pour lequel je vais donner *l'URL du SAT* (Shared Access Token) associé : +
+        image:AZ-104_storage-account_41.jpg[]
+
+.Vérification de l'intégrité des données copiées
+[NOTE]
+====
+Avant la copie Azure réalise un *hash des données* à copier sur le poste de travail (source), puis, une fois copiées dans le Storage Account, il va refaire un hash des données copiées et comparer les 2 afin d'en vérifier l'intégrité. 
+====
+
+-> AzCopy est très pratique quand on a une *grande quantité de données à copier*
+
+* Process pour une *copie de Storage Account à Storage Account* : 
+
+    ** Le process est identique au précédent, mais le <FROM> de la commande `azcopy copy <FROM> <TO>` est remplacé : 
+        *** soit par l'URL du SAT d'un autre container, potentiellement d'un autre Storage Account
+        *** soit par l'URL de la SAS d'un blob
++
+[NOTE]
+====
+-> AzCopy est conçu pour effectuer des opérations de *copie sur des éléments spécifiques* (blobs, conteneurs) et *PAS sur l'ensemble d'un service*. On ne peut donc pas donner en source l'URL de la SAS du service blob d'un Storage Account.
+====
+
+    ** AzCopy permet donc de copier des données, au format blob, entre 2 Storage Account dans *2 régions différentes*
+    ** Lors d'une copie de Storage Account à Storage Account, les données ne sont PAS copiées sur le poste de travail avant d'être copiées vers le Storage Account cible. +
+    -> Tout va être piloté entre les 2 Storage Account, et va donc rester dans les backbones Microsoft.
+
+* Option d'AzCopy à connaître pour la certification : *sync*
+
+    ** Via cette option, on *surveille la date de dernière modification des fichiers* afin de ne copier sur la cible QUE ceux qui ont été modifiés depuis la dernière copie.
+    ** Un usage courant est de créer une *tâche planifiée* (via un quelconque CRON like) qui va régulièrement tenir à jour la cible en y copiant les fichiers de la source ayant changé depuis la dernière copie.
+
+==== Utilitaire : Microsoft Azure Storage Explorer
+
+* Il s'agit d'un client lourd installable sur Linux, Windows et MacOS
+
+image:AZ-104_storage-account_42.jpg[]
+
+* Dans Azure Storage Explorer, en se connectant via un compte Azure (un compte dans l'AAD), cet outil va *agréger*, pour toutes les subscriptions auxquelles ce compte à accès, *tous les Storage Account* associées à celles-ci.
+
+* Toutes les fonctionnalités portant sur un Storage Account sont également accessibles via cet outil.
+* *L'avantage de l'Azure Storage Explorer* par rapport au Portail Azure est qu'il *agrége en 1 seule interface l'accès à tous ses Storage Account*, là où le Portail Azure n'en affiche à chaque fois qu'1 seul.
+
+==== Service Import/Export
+
+* Ce service Import/Export implique *l'envoi "physique" d'un disque dur à Microsoft*, via un transporteur, dans les cas où de très gros volumes de données sont impliqués
+    ** Comme des To de data pour lesquels vous n'avez pas la bande passante nécessaire pour un transfert de données
+
+*Import de données dans Azure* :
+
+image:AZ-104_storage-account_43.jpg[]
+image:AZ-104_storage-account_44.jpg[]
+image:AZ-104_storage-account_45.jpg[width=600]
+image:AZ-104_storage-account_46.jpg[width=600]
+image:AZ-104_storage-account_47.jpg[width=600]
+
+    * Via ce service on va générer une tâche qui va vous permettre d'envoyer un disque dur directement aux data centers de Microsoft (leurs locaux physiques), via un transporteur (DHL, UPS, etc.)
+    
+    * Workflow : 
+        1. Vous copiez vos données sur le (les) disque dur
+        2. Une fois copiées, vous devez chiffrer ces données à l'aide de l'outil WAImportExport (Windows Azure Import Export, un "vieux nom" du temps où Microsoft Azure s'appelait Windows Azure...), qui n'est rien de plus qu'un BitLocker managé
+        3. Vous envoyez par un transporteur le disque dur à Microsoft
+        4. Quand reçu Microsoft va importer les données du DD au *format blob* ou au *format Azure Files* (partage réseau)
+
+    * Ce service est optimisé pour des envois / transferts de données de plus de 1 To (d'où la mention "1 TB Onwards")
+
+*Export de données depuis Azure* : 
+
+    * Exemples de use case : 
+        ** Vous faites de la réversibilité et vous voulez passer chez un autre hébergeur qu'Azure
+        ** Ou vous voulez exporter vos données et les récupérer dans un disque dur afin d'en stocker une copie dans vos data centers on-premises
+
+    * Cette fois-ci via le service on va générer une tâche d'export.
+        ** Contrairement à la tâche d'import, on ne peut exporter de données *QUE au format blob*
+        ** On peut envoyer jusqu'à *1 To de data par disque via la tâche d'export*
+    
+    * Workflow : 
+        1. On commence par envoyer une disque dur à Microsoft
+        2. Et les équipes Microsoft vont y copier nos données au *format blob*
+        3. Puis les *chiffrer* avec un outil similaire à BitLocker
+        4. Puis nous renvoyer le disque dur
+
+=== AZ-104 EP08 : 
+
 TO BE COMPLETED
+
+
 
 
 
@@ -2535,9 +2881,7 @@ D'autres sites permettant de préparer la certification :
 Sites de *labs* et *workshops* pour pratiquer : 
 
     * Azure Citadel - Labs and Workshops : https://azurecitadel.com/
-    * Microsoft Cloud Workshop - More labs and workshops : https://microsoftcloudworkshop.com/
     * Labs from Microsoft Training on GitHub : 
-        ** https://github.com/MicrosoftLearning/AZ-303-Microsoft-Azure-Architect-Technologies : *LA* ressource officielle de Microsoft pour pratiquer l'AZ-303
         ** https://github.com/MicrosoftLearning/AZ-104-MicrosoftAzureAdministrator/
         ** Ces labs de Microsofts sont vraiment des guides "step by step" permettant de manipuler les technologies Azure autour d'un thème donné.
 
@@ -2580,6 +2924,7 @@ GPO:: Group Policy Object
 GRS:: Geo-Redundant Storage
 IAM:: Identity and Access Management
 IKE:: Internet Key Exchange. Le protocole IKE est chargé de négocier la connexion. Avant qu'une transmission IPSec puisse être possible, IKE est utilisé pour authentifier les deux extrémités d'un tunnel sécurisé en échangeant des clés partagées.
+IOPS:: Input / Output Operations Per Second
 IPAM:: IP Address Management
 IPSec:: Internet Protocol Security
 ISMS:: Information Security Management Systems
@@ -2611,6 +2956,7 @@ SCOM:: System Center Operations Manager
 SKU:: *Stock-Keeping Unit* (SKU) is a generic inventory term, that allows to represent the different shapes of the product.
 SMB:: Server Message Block
 SNAT:: Source Network Address Translation
+SSE:: Storage Service Encryption
 SSPR:: Self-Service Password Reset
 SSTP:: Secure Socket Tunneling Protocol
 UDR:: User Defined Route
