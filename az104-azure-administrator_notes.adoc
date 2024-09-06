@@ -2831,29 +2831,149 @@ image:AZ-104_storage-account_47.jpg[width=600]
         3. Puis les *chiffrer* avec un outil similaire à BitLocker
         4. Puis nous renvoyer le disque dur
 
-=== AZ-104 EP08 : 
+=== AZ-104 EP08 : Virtual Machine
+
+URL vidéo PHILIT : https://www.youtube.com/watch?v=hX7Dlk8gNFU&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=8
+
+Agenda : 
+
+    * Architecture d'une machine virtuelle
+    * Haute disponibilité (Availability Set & Availability Zone)
+    * Bastion & Extensions
+    * Virtual Machine Scale Sets
+    * Portail Azure, CloudShell, PowerShell & Azure CLI
+
+==== Architecture d'une VM
+
+* Exemple d'*architecture standardisée de VM dans Azure*, issue de l'*Azure Architecture Center* : +
+https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/n-tier/windows-vm
+
+image:AZ-104_virtual-machine_01.jpg[]
+
+* *Une VM a TOUJOURS une NIC* qui lui est associée : lorsqu'une VM est créée dans Azure, une carte réseau virtuelle (NIC) est automatiquement créée et attachée à celle-ci
+
+* Cette *NIC* a *forcément une IP privée* car toute *VM Azure* doit *obligatoirement avoir une IP privée*.
+
+* *Facultativement*, une *IP publique* peut également être *associée à la NIC* de la VM (le cas du présent schéma), ce qui va donner à cette dernière une portée publique (typiquement pour héberger un site web avec du IIS ou de l'Apache dessus)
+
+.Différence entre IP publique et IP privée : ressource indépendante ou non
+[NOTE]
+====
+-> Bien que l'*IP publique* soit une *ressource indépendante* (visible sur le schéma), l'*IP privée* est plutôt un attribut ou une *propriété de la NIC elle-même*.
+
+* *IP privée* : Attribut de la NIC, utilisée pour l'identification interne au réseau virtuel, gérée automatiquement par Azure.
+* *IP publique* : Ressource indépendante, utilisée pour accéder à la VM depuis Internet, doit être créée et gérée manuellement.
+====
+
+* Cette *IP publique* va pouvoir être *associée à un nom DNS*
+    ** Lors d'un *redémarrage de la VM*, si l'IP publique change car mise en dynamique et non en statique, le *nom DNS ne va pas changer*.
+
+* Une VM a toujours au minimum 2 disques :
+
+    ** *1 Managed disk* : 
+        *** qui va stocker l'OS (le `C:\` pour une machine Windows)
+
+    ** *1 Temp disk* : 
+        *** qui va contenir par défaut le fichier de pagination / swap (*pagefile.sys*)
+        *** sa taille est fonction de la taille de la VM
+
+.Managed disks et Temp disks
+[NOTE]
+====
+*Managed disks* :
+
+    * *Persistant* : Les données sont conservées même si la VM est arrêtée ou redémarrée.
+    * *Sauvegardable* : Vous pouvez créer des sauvegardes du disque managé.
+    * *Configurable* : Vous pouvez choisir la taille, le type (Standard, Premium, Ultra) et le niveau de performance du disque managé.
+
+*Temp disks* (disques temporaires) :
+
+    * Conçus pour stocker des *données temporaires* (comme le pagefile.sys ou des fichiers de cache)
+    * *Non persistant* : Les données sont perdues en cas de redémarrage ou d'arrêt de la VM.
+        ** Il s'agit d'un disque local, ce qui signifie qu'il est physiquement situé sur l'hôte physique sur lequel la VM est exécutée.
+        ** Les données stockées sur ce disque ne sont pas sauvegardées dans le stockage Azure et peuvent être perdues lors de redémarrages ou d'autres événements du cycle de vie de la VM.
+    * *Non sauvegardable* : Vous ne pouvez pas sauvegarder le disque temporaire.
+    * *Performance* : Généralement plus rapide qu'un disque managé, mais la capacité est limitée.
+    * *Gratuité* : les Temp disks ne sont PAS facturés par Azure
+====
+  
+* Sur Azure, les *VM* sont *catégorisées* par *taille* (size) et par *série* (series) qui sont chacune représentées par une série de caractères, chaque caractère représentant différents aspets de la VM (nb de vCPU, RAM, etc.) : 
+    
+    ** Exemple de *nommage d'une série* de VM (VM series) : *"DCads_v5"* +
+    -> On parlera donc des "DCads_v5-series" +
+    image:AZ-104_virtual-machine_02.jpg[width=600]
+        *** Most families are represented using 1 letter, but others such as GPU sizes (ND-series, NV-series pour NVidia, etc.) use 2.
+    
+    ** Exemple de *nommage d'une taille* de VM (VM size) : *"DC8adsv5"* +
+    -> On parlera donc d'une "Standard_DC8ads_v5" size dans la "DCads_v5-series" +
+    image:AZ-104_virtual-machine_03.jpg[width=600]
+    
+    ** Plus d'information sur cette *convention de nommage* et les caractéristiques des différentes VM sizes et series dans la *documentation Learn Microsoft* : 
+        *** https://learn.microsoft.com/fr-fr/azure/virtual-machines/sizes/overview
+        *** https://learn.microsoft.com/fr-fr/azure/virtual-machines/vm-naming-conventions
+
+* Une VM peut également se voir ajouter des *disques de données*
+
+    ** Les "disques de données" sont en fait des *managed disks* mais on les nomme souvent ainsi pour les différencier du disque système (qui stocke l'OS)
+
+    ** *Taille maximale* d'un disque de donnée : *32 To*
+        *** Cette taille est le principal facteur déterminant le coût d'un disque de données Azure.
+
+* Suivant que l'OS de votre VM est Linux, Windows ou macOS, *2 protocoles* vont permettre d'y *accéder* : 
+    
+    ** *RDP* (Remote Desktop Protocol) : pour l'OS *Windows*
+        *** Le port par défaut est le 3389
+    
+    ** *SSH* (Secure SHell protocol) : pour Linux et macOS
+        *** Le port par défaut est le 22
+
+* Une *VM* est obligatoirement installée *dans le subnet d'un VNet*
+    ** Donc la NIC d'une VM est associée à un subnet, lui même partie intégrante d'un VNet.
+
+* L'*accès à la VM* va être *protégé* par un *NSG* (Network Security Group)
+
+    ** Le NSG est un *firewall*
+    ** C'est un service gratuit qui va filtrer les flux entrant et sortant de la VM
+
+    ** Le NSG peut être *positionné* :
+
+        *** *au niveau du subnet*
+            **** Le cas du présent schéma d'architecture
+            **** Cela signifie que toutes les NICs créées dans ce subnet hériteront automatiquement des règles du NSG. C'est un moyen pratique de sécuriser un groupe de VM qui partagent le même subnet.
+
+        *** OU *au niveau de la NIC* de la VM
+        
+        *** OU *les 2 à la fois*
+
+.Bonne pratique : associer le NSG au subnet de la VM et non à sa NIC
+[NOTE]
+====
+*Par défaut*, à la création d'une VM, un NSG est *créé au niveau de sa NIC* (sauf si vous demandez à créer une VM SANS NSG)
+
+    * -> Ce n'est *PAS une bonne pratique*, qui est de créer le NSG au niveau du subnet. +
+    En effet, il n'existe *pas encore d'interface unique* qui permet de manager l'intégralité des NSG de votre infrastructure.
+    * -> DONC, si vous créez 100 VMs, 100 NSGs associés à leurs NIC vont être créés, ce qui va vraiment en *compliquer l'administration* en l'absence d'une interface unique de gestion.
+====
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 TO BE COMPLETED
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 == Définitions et explications diverses
 
