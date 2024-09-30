@@ -1178,7 +1178,7 @@ Microsoft explanation : +
 https://learn.microsoft.com/en-us/azure/load-balancer/backend-pool-management
 ====
 
-    * Usage classique d'un Application Gateway : j'ai un site web que je veux rendre disponible et, pour scaler dans Azure, dans un backend pool : 
+    * Usage classique d'un Application Gateway : j'ai un site web que je veux rendre disponible et que je veux scaler dans Azure dans un backend pool : 
         ** Mon site web est par exemple déployé sur 10 VMs
         ** Ce site web est dans un backend pool qui est derrière un Application Gateway
         ** L'Application Gateway va porter l'*IP publique* de mon site web
@@ -2913,7 +2913,7 @@ image:AZ-104_virtual-machine_01.jpg[]
         *** https://learn.microsoft.com/fr-fr/azure/virtual-machines/sizes/overview
         *** https://learn.microsoft.com/fr-fr/azure/virtual-machines/vm-naming-conventions
 
-* Une VM peut également se voir ajouter des *disques de données*
+* Une VM peut également se voir ajouter des *disques de données* ("data disks")
 
     ** Les "disques de données" sont en fait des *managed disks* mais on les nomme souvent ainsi pour les différencier du disque système (qui stocke l'OS)
 
@@ -2951,16 +2951,257 @@ image:AZ-104_virtual-machine_01.jpg[]
 ====
 *Par défaut*, à la création d'une VM, un NSG est *créé au niveau de sa NIC* (sauf si vous demandez à créer une VM SANS NSG)
 
-    * -> Ce n'est *PAS une bonne pratique*, qui est de créer le NSG au niveau du subnet. +
+    * -> Ce n'est *PAS une bonne pratique* ; celle-ci est de créer le NSG au niveau du subnet. +
     En effet, il n'existe *pas encore d'interface unique* qui permet de manager l'intégralité des NSG de votre infrastructure.
     * -> DONC, si vous créez 100 VMs, 100 NSGs associés à leurs NIC vont être créés, ce qui va vraiment en *compliquer l'administration* en l'absence d'une interface unique de gestion.
 ====
 
+* Une VM a toujours un *Storage Account* qui va contenir les journaux de diagnostic (*Diagnostic logs*)
++
+.Différence entre Activity logs et Diagnostic Logs
+[NOTE]
+====
+* Les *diagnostic* logs vous aident à comprendre *POURQUOI quelque chose ne fonctionne pas*
+* Les *activity logs* vous indiquent *QUI a fait QUOI et QUAND cela s'est produit*.
+====
+
+    ** Les journaux de diagnostics sont importants pour troubleshooter ce qui se passe sur votre VM dans le Cloud public.
+        *** En effet, quand vous faites du Cloud public, même si derrière vos VMs Azure on retrouve toujours une *infrastructure avec un hyperviseur* (Hyper-V sur Azure), *vous n'avez plus accès à la console de virtualisation* de celui-ci. +
+        -> Donc, vous ne pouvez plus utiliser cette dernière pour *accéder à vos VMs*, pour ce faire il vous faut passer soit par du *RDP* soit par du *SSH* (via un client comme PuTTY)
+        *** Donc, si la VM a un problème au démarrage, vous n'avez pas accès à la console de virtualisation, contrairement à une version on-premises de cette infrastructure. +
+        -> Dans ce cas, le *journal de diagnostic* va vous permettre de *troubleshooter ce qui se passe sur la VM*. +
+        Raison pour laquelle ce journal est *contenu dans un Storage Account*, afin d'être *accessible* "à côté de la VM" et de permettre de visualiser le journal d'évènement au démarrage de celle-ci et de comprendre ce qui se passe.
+        *** En *dernier recours*, si votre VM ne répond vraiment pas au démarrage, vous pouvez toujours *télécharger sur votre poste local le VHD* (Virtual Hard Disk) de la VM après l'avoir exporté du Managed disk, puis *utiliser localement un hyperviseur* (comme Hyper-V) pour essayer de démarrer la VM.
+
+*DEMO : création de VM*
+
+    * Dans cet exemple, on voit qu'une VM "w2k19" a été créée. +
+    image:AZ-104_virtual-machine_04.jpg[]
+
+    * Les resources suivantes lui sont associées : 
+        ** Un *Managed disk contenant l'OS* lui est attaché "w2k19_OsDisk_..."
+        ** Une *NIC* "MyNICppdemo"
+            *** Cette NIC contient une *IP privée* (obligatoire)
+            *** Ici, une *IP publique* "ip-pub-vm-w2k19" a été créée et lui est également associée
+        ** Un *NSG* "w2k19-nsg1" associé à la NIC
+
+    * On regarde la VM, et on y voit bien l'IP publique et l'IP privée : +
+    image:AZ-104_virtual-machine_05.jpg[]
+
+    * Via le menu de la NIC, je peux facilement : 
+    image:AZ-104_virtual-machine_07.jpg[]
+    image:AZ-104_virtual-machine_06.jpg[width=600]
+
+        ** *Associer une IP publique* à ma NIC ou l'en dissocier
+        ** Basculer entre IP privée *statique* ou *dynamique*
+
+    * Pour obtenir le *schéma d'architecture réseau du VNet* (ici "VNET-PROD"), on peut passer par son *menu "Diagram"* : +
+    image:AZ-104_virtual-machine_08.jpg[]
+        ** On y retrouve le VNet "VNET-PROD"
+        ** 3 subnets "Production", "AzureFirewallSubnet", "AzureBastionSubnet"
+        ** Le subnet "Production" contient ma VM "w2k19", le NSG "w2k19-nsg1" et l'IP publique "ip-pub-vm-w2k19"
+
+    * Le *NSG* "w2k19-nsg1" va permettre de *filtrer* aussi bien les *flux entrant* (via les *"Inbound port rules"*) que les *flux sortant* (via les *"outbound port rules"*) : +
+    image:AZ-104_virtual-machine_09.jpg[]
+
+    * Pour *se connecter à la VM*, je passe par son *menu "Connect"*, et comme son OS est Windows, je choisis le protocole RDP (Remote Desktop Protocol)
+
+        ** Comme je n'ai pas de VPN vers ma VM, via RDP, je vais *m'y connecter via son IP publique* (sur le port par défaut, le 3389)
++
+[NOTE]
+====
+Ce n'est *pas très secure*, car mon NSG va ouvrir en source Internet sur le port par défaut du protocole RDP (3389). +
+-> Donc n'importe qui connaissant l'IP publique de la VM va pouvoir essayer de "sniffer" les accès à celle-ci au travers d'un login / password.
+====
+
+        ** Il est donc conseillé d'utiliser d'autres services pour se connecter à votre VM : 
+
+            *** Préférez utiliser un *VPN* ou une *liaison Express Route*
+            *** OU utilisez le *service "Just-in-time"* +
+            image:AZ-104_virtual-machine_10.jpg[]
+
+        ** Quand vous l'activez, via le *menu "Configuration"* de la VM, le service *Just-in-time* va : 
+            *** *fermer en permanence le port RDP* (via une configuration du NSG)
+            *** vous permettre, par exemple pour une tâche d'administration, de *demander l'accès à ce port RDP* via une *"Request access"* : 
+            image:AZ-104_virtual-machine_12.jpg[]
+            {lb}
+            image:AZ-104_virtual-machine_13.jpg[]
+                **** j'indique que je veux accéder à la VM *via mon IP* ("My IP", donc l'IP publique de sa box depuis chez soi)
+                **** j'indique la *raison de cette demande* d'accès ("Enter request justification")
+                **** J'indique la *durée* pendant laquelle j'ai besoin de cet accès ("Time range (hours)")
+            *** A ce moment, le service "Just-in-time" va *créer une connexion dans le NSG* (création d'une nouvelle règle basée sur l'IP publique de ma box) qui va permettre pendant par exemple 1h d'accéder à la VM : +
+            image:AZ-104_virtual-machine_11.jpg[]
+            *** Et quand je me serai déconnecté de la VM, au bout d'1h, le service "Just-in-time" *fermera le port dans le NSG*.
+
++
+.Service "Just-in-time" de connexion à une VM
+[NOTE]
+====
+-> Le service *Just-in-time* permet donc de se *CONNECTER* à une VM sur un port 3389 QUE pendant un temps prédéfini depuis une IP prédéfinie tout en justifiant l'accès à cette VM.
+
+🔥 Attention ! Le service "Just-in-time" est *une porte, PAS une clé*. +
+-> Il permet de se *CONNECTER à la VM* et *NON d'y ACCEDER*, ce qui nécessite un compte (voir ci-après)
+====
+
+    * Normalement, pour *accéder à une VM Windows ou Linux*, il faudrait un *compte local* dessus (cad avoir les droits d'accès sur cette VM, d'où l'usage du verbe "accéder" plutôt que "se connecter"). +
+    Mais aujourd'hui, *Azure permet d'y accéder à l'aide du compte AAD uniquement* via le mail associé à celui-ci.
+        ** Cela se configure via le menu "Access control (IAM)" de la VM, puis via un "Add role assignment" : +
+        image:AZ-104_virtual-machine_14.jpg[]
+        ** On y trouve un rôle "Virtual Machine Administrator Login" : +
+        image:AZ-104_virtual-machine_15.jpg[]
+        ** qui permet de sélectionner un compte ADD auquel donner le rôle : +
+        image:AZ-104_virtual-machine_16.jpg[]
+        ** Il faut également permettre ce type d'accès lors de la création de la VM : +
+        image:AZ-104_virtual-machine_18.jpg[width=300]
+        
+        ** -> Ainsi, je n'aurai plus besoin pour accéder à la VM d'ouvrir une session en tant qu'admin avec un compte local, je pourrai *y accèder simplement avec le mail de mon compte AAD*.
+
+    * *Pour créer une VM*, on passe par le *menu "Virtual machines"* du portail Azure, puis on fait un "Create" "Azure virtual machine" : +
+    image:AZ-104_virtual-machine_17.jpg[]
+    {lb}
+    image:AZ-104_virtual-machine_19.jpg[width=700]
+
+        ** Une VM est toujours associée à 1 région, elle ne peut pas être à cheval sur 2.
+        ** il faut définir la taille (size) de la VM (voir un peu plus haut pour la convention de nommage des tailles de VMs) : +
+        image:AZ-104_virtual-machine_20.jpg[width=700]
+        image:AZ-104_virtual-machine_21.jpg[]
+            
+            *** Les "tailles" de VMs correspondent au nombre de vCPU et de RAM que Microsoft va associer à celles-ci
+            *** Les VMs ont des nombres de vCPU et des tailles de RAM prédéfinis : on ne peut pas dire qu'on en veut une avec "16.3 Go" de RAM...
++
+[IMPORTANT]
+====
+-> On peut toujours *changer de taille de VM* MAIS ce changement implique un *redémarrage de la VM*. +
+Il n'est pas possible de faire un changement "à chaud" de l'infrastructure matérielle derrière les VMs.
+====
+
+            *** Si ici on prend une D2s_v3, on voit que : 
+                **** je vais pouvoir rajouter jusqu'à 4 data disks (rappel : les data disks sont des managed disks)
+                **** je vais disposer d'un temp disk de 16 go
+                **** j'ai une estimation du coût mensuel de cette VM
+
+        ** On choisit *l'image à installer sur la VM*, c'est à dire son OS : +
+        image:AZ-104_virtual-machine_22.jpg[]
+            *** Sont disponibles aussi bien des OS serveurs que des OS de poste de travail (Windows 10 Pro ou Windows 11 Pro)
+            *** Ici on va prendre l'OS par défaut, un "Windows Server 2016 Datacenter"
+
+        ** Il faut *créer le compte local* de la VM ("administrator account")
+        ** Et demander l'*ouverture du port* 3389 du RDP pour permettre l'accès à l'OS Windows
+
+        ** Je peux également préciser à Azure que je dispose déjà d'une licence on-premises pour l'OS Windows Server 2016 Datacenter
+            *** Cela va me permettre de réutiliser dans Azure ma licence on-premises, si j'ai un contrat de type EA (Enterprise Agreement) avec une software assurance. +
+            Cela va permettre de réduire le coût de licence de la VM de 49% (dépend de plusieurs facteurs, dont le type de processeur) +
+            image:AZ-104_virtual-machine_23.jpg[]
+        
+    * On passe ensuite à la *configuration des disques* (OS disk et Data disks) :
+
+        ** On commence par le type de l'OS Disk : +
+            image:AZ-104_virtual-machine_24.jpg[]
+            *** Par défaut, le disque est en Premium SSD qui garantit un bon niveau de performances en termes IOP par seconde, d'accès aux données ET vous offre un SLA plus élevé que du Standard SSD ou du Standard HDD.
+            *** La performance du disque de votre VM va avoir une influence sur le coût de la VM ainsi que sur son SLA.
+
+            *** Documentation Azure du SLA des VMs : +
+            https://www.microsoft.com/licensing/docs/view/Service-Level-Agreements-SLA-for-Online-Services?lang=1
+                **** On peut y voir qu'une VM "seule" avec un OS Disk SSD Premium a un SLA de 99,9%
+                **** La même VM avec un OS Disk Standard a un SLA de 99,5%
+
+        ** On a la possibilité d'ajouter des data disks : +
+        image:AZ-104_virtual-machine_25.jpg[]
+        image:AZ-104_virtual-machine_26.jpg[]
+            *** Ces derniers ont une taille maximale de 32 To +
+            image:AZ-104_virtual-machine_27.jpg[]
+            *** Le nombre de data disks que l'on peut rajouter dépend de la taille de la VM
+
+        ** On note que dans la section "Advanced", l'option "Use managed disks" est cochée par défaut et non désélectionnable. +
+        image:AZ-104_virtual-machine_28.jpg[]
+            *** Il faut savoir qu'actuellement, *les VMs Azure sont toutes créées par défaut avec des Managed disks*, MAIS auparavant, il était également possible d'utiliser une *ancienne technologie* (unmanaged disks) où l'on *stockait les VHD (Virtual Hard Drive) des VMs sur des Storage Account*. +
+            -> Cette technologie a été *abandonnée il y a plusieurs années*
+            *** Aujourd'hui, tous les VHD des VMs sont stockés sur et gérés par des Managed disks, vous n'avez plus besoin de les gérer à base de blobs avec le service container dans un Storage Account.
+            *** Microsoft a annoncé une *fin de support pour ces unmanaged disks au 2025/09/30*. +
+            Voir cet article de Microsoft pour plus de détails : +
+            https://learn.microsoft.com/en-us/azure/virtual-machines/unmanaged-disks-deprecation
+
+    ** On passe ensuite à la *configuration du réseau* (networking) de la VM : +
+    image:AZ-104_virtual-machine_29.jpg[]
+
+        *** Une VM a obligatoirement besoin d'une *NIC*
+            **** Cette NIC est obligatoirement rattachée au subnet d'un VNet
+            **** Une NIC a obligatoirement une IP privée, et peu facultativement avoir une IP publique
+        
+            **** Comme déjà expliqué plus haut, par défaut, à la création d'une VM, un NSG est créé au niveau de sa NIC MAIS ce n'est *PAS une bonne pratique* -> Celle-ci est de créer le NSG au niveau du subnet.
+                ***** Si on ne crée PAS de NSG pour la NIC de notre VM, cela veut dire que la VM devra être protégée par le firewall de l'OS (par exemple le firewall avec fonctions avancées de sécurité sur du Windows, ou Iptables pour du Linux)
+                ***** Et si vous avez mis un NSG au niveau du subnet, ce dernier sera protégé ainsi que la VM qu'il contient.
+            
+        *** On peut également mettre la VM derrière un Load Balancer, qui peut être, par exemple :
+            **** un Azure Application Gateway: le load balancer est ici un Reverse Proxy qui ne traite que les protocoles HTTP (port 80) et HTTPS (port 443). +
+            -> Cela implique qu'on a installé sur la VM un serveur Web comme un Apache ou un IIS pour rendre un service web.
+            **** un Azure Load Balancer
+
+    ** On passe ensuite à *l'onglet Management* : 
+
+        *** On peut y mettre en place la connexion à la VM avec un *login utilisant l'Azure AD* : +
+        image:AZ-104_virtual-machine_30.jpg[]
+        
+        *** On peut via l'*auto-shutdown* définir une *heure automatique d'arrêt de la VM* et un mail pour vous tenir informer que la VM a été arrêtée : +
+        image:AZ-104_virtual-machine_31.jpg[]
+            **** Cela permet d'éviter d'être facturé quand un dev par le soir en ayant oublié de couper sa VM 😉
+        
+        *** On peut configurer le *backup de la VM* dans un Recovery Service Vault : +
+        image:AZ-104_virtual-machine_32.jpg[]
+
+    ** Dans l'*onglet Monitoring* on va pouvoir activer les journaux de diagnostic dès le démarrage de la VM
+        *** Ces derniers seront stockés dans un Storage Account managé : +
+        image:AZ-104_virtual-machine_33.jpg[]
+
+    ** Dans l'onglet *Advanced* on va pouvoir sélectionner des *extensions* à installer sur la VM suite à son déploiement : +
+    image:AZ-104_virtual-machine_34.jpg[]
+        *** Une extension est un logiciel que l'on peut installer soit à la création de la VM soit une fois que celle-ci est créée
+            **** La licence de ladite extension n'est PAS incluse lors de son installation ; il faudra la renseigner après coup.
+        *** Il est également possible d'installer un *Custom Script Extension* (*CSE*) : +
+        image:AZ-104_virtual-machine_35.jpg[]
+            **** Un CSE vous permet d'exécuter un script Powershell une fois la VM créée
+        *** Si un script (CSE) ou une extension met plus de *90 min* à s'exécuter / s'installer, on vous *rend la main sur la VM*.
+
+    ** Revenons maintenant dans *l'onglet Basics* pour parler de *haute disponibilité de la VM* au travers des concepts d'*Availability Set* et *Availability Zone* disponibles via l'option "Availability options" : +
+    image:AZ-104_virtual-machine_36.jpg[]
+
+
+        *** *Availability set* : Quand on crée une VM dans un Availability set, on va en fait déployés *plusieurs VMs* (par défaut 3), chacune hébergées dans un *environnement matériel différent*, appelé *"fault domain"* (FD).
+            
+            **** Voir la documentation Azure pour plus de détails : +
+            https://learn.microsoft.com/en-us/azure/virtual-machines/availability-set-overview
+
+            **** *Fault domains* define the group of virtual machines that *share a common power source and network switch*. +
+            By default, the virtual machines configured within your availability set are separated *across up to three fault domains* : +
+            image:AZ-104_virtual-machine_37.jpg[]
+
+            **** On voit ici un Availability Set et 3 fault domains (les "conteneurs blancs") où pourraient être déployées nos VMs : +
+            image:AZ-104_virtual-machine_38.jpg[]
+            ***** Pour information, pour scaler verticalement et accroître les ressources quand la demande augmente, de nouveaux "conteneurs blancs" sont ajoutés à l'aide de grues 😉
+
+            **** *Update domains* : environ 1 fois par an Microsoft va vous envoyer un mail pour vous prévenir qu'il va devoir patcher son infrastructure (exemple : patcher les processeurs Intel sur lesquels vos VMs sont déployées) et donc devoir redémarrer vos VMs. +
+            Les *Update domains* permettent, dans le cas de ces updates de l'infrastructure de Microsoft, de *séquencer le redémarrage de votre infrastructure* afin de garantir qu'un partie de vos VMs sera toujours disponible pour supporter votre applicatif.
+            **** En répartissant vos VMs dans différents update domains, Microsoft vous garantit que le jour d'une maintenance planifiée de vos VMs, on va d'abord redémarrer les VMs de l'update domain 1, PUIS, une fois que update domain 1 est redémarré, on va redémarrer celles de l'update domain 2, et ainsi de suite. Au final, seul un update domain est redémarré à la fois, laissant les VMs des autres update domains toujours disponibles
+
+            **** L'Availability Set met en oeuvre des *règles de non affinité* qui font qu'à un instant "t" vos VMs ne peuvent pas se trouver sur le même hyperviseur.
+
+            **** L'*Availability Set* va vous offrir un *SLA de 99.95%* SI votre VM est *au moins accompagnée d'une autre VM ou plus*. +
+            image:AZ-104_virtual-machine_39.jpg[]
+            Concrêtement, si vous avez 2 VMs ou plus qui supportent le même applicatif, si vous les mettez dans un Availability Set, Azure va s'arranger pour répartir vos VMs dans différents endroits du data center afin qu'à aucun moment elles ne se retrouvent dans le même hyperviseur matériel (le même "conteneur blanc" de la précédente image)
+
+            **** L'*Availability set* est un service *gratuit*.
++
+[NOTE]
+====
+* Pour information, *VMWare* a un concept similaire à celui d'Availability Set avec le *DRS*, *Distributed Resource Scheduler* : +
+DRS spreads the virtual machine workloads across vSphere hosts inside a cluster and monitors available resources for you.
+
+* Pour plus d'informations, voir https://www.vmware.com/products/cloud-infrastructure/vsphere/drs-dpm
+====
 
 
 
-
-
+TO BE COMPLETED 36:40
 
 
 
@@ -2975,6 +3216,44 @@ image:AZ-104_virtual-machine_01.jpg[]
 
 
 TO BE COMPLETED
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 == Définitions et explications diverses
 
