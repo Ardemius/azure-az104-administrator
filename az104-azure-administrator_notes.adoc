@@ -85,6 +85,8 @@ Philippe fait partie du Club Azure Insiders et poste régulièrement sur le Team
 -> Et pour ce que j'en vois, Philippe doit maintenant faire partie de Microsoft, il a une adresse interne : philippe.paiola (symbol goes here) microsoft.com
 ====
 
+TIP: Philippe utilise le *Microsoft Whiteboard* pour tous ses schémas en direct, et cela rend plutôt bien 👍
+
 Ressources conseillées par PHILIT pour se préparer à la certification : 
 
     * La *documentation Microsoft Learn* : https://docs.microsoft.com/fr-FR/learn/certifications/roles/administrator
@@ -96,7 +98,7 @@ Ressources conseillées par PHILIT pour se préparer à la certification :
 
 === AZ-104 EP01 : Azure AD (AAD) & VNet
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=JoGL_Q7ihG8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=1
+URL vidéo PHILIT : https://www.youtube.com/watch?v=JoGL_Q7ihG8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
 
 ==== Identité et ADD
 
@@ -375,7 +377,7 @@ WARNING: Par défaut, rien n'est conservé, c'est à nous d'activer et de config
 
 === AZ-104 EP02 : Hub & Spoke et Azure Backup
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=EbZLEcDVF8g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=2
+URL vidéo PHILIT : https://www.youtube.com/watch?v=EbZLEcDVF8g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
 
 ==== Hub & spoke (peering, UDR, NVA...)
 
@@ -730,7 +732,7 @@ Attention ! Pour le backup dont parlait Philippe, la bande passante n'est pas fa
 
 === AZ-104 EP03 : VPN S2S (Site à Site), VNet to VNet & PRA
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=cuWs3E1Zmm8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=3
+URL vidéo PHILIT : https://www.youtube.com/watch?v=cuWs3E1Zmm8&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
 
 ==== VPN S2S (Site à Site dans Azure)
 
@@ -1125,7 +1127,7 @@ image:AZ-104_VPN-S2S-VNet-to-VNet-PRA_16.jpg[]
 
         ** *Test de basculement* : Pratique quand on a des infras basées sur des *audit à base d'ISO-27012, 27001, etc.* 
             *** Très souvent dans ce type d'audits, les auditeurs demandent à ce qu'un test de basculement soit effectué régulièrement (souvent 1 fois / an) afin de vérifier "avant le jour J et la cata" (rupture de normalité, inondation, etc.)" que tout est effectivement bien configuré. +
-            -> Les tests de basculement sont faits pour cela et vont permettre, quand on le souhaite, de recréer la VM dans un *VNet complètement cloisonné* des autres VNet (pas de peering, de VPN, de VNet to VNet ou d'Express Route)
+            -> Les tests de basculement sont faits pour cela et vont permettre, quand on le souhaite, de recréer la VM dans un *VNet complètement cloisonné* des autres VNet (pas de peering, de VPN, de VNet to VNet ou d'ExpressRoute)
                 **** Ce VNet sera uniquement utilisé pour la recréation de la VM (complètement *dédié aux tests de basculement*) pour vérifier que notre appli est bien recréée dans la 2nd région.
                 **** Et pour accéder à la VM, il faudra installer une IP publique dessus
 
@@ -1143,7 +1145,7 @@ https://www.sorinmustaca.com/the-iso-27000-family-of-protocols-and-their-role-in
 
 === AZ-104 EP04 : Azure Load Balancer & Application Gateway
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=MdRokWoGgr0&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=4
+URL vidéo PHILIT : https://www.youtube.com/watch?v=MdRokWoGgr0&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
 
 ==== Load Balancing Services sur Azure
 
@@ -1384,6 +1386,7 @@ image:AZ-104_load-balancer_05.jpg[width=600]
 
 -> En gros, par défaut la version *standard* est "*sécurisée par design*"
 
+[[availability-zones, Availability Zones]]
 .Focus sur les Availability Zones (AZ)
 [NOTE]
 ====
@@ -1645,7 +1648,7 @@ image:AZ-104_load-balancer_33.jpg[]
 
 === AZ-104 EP05 : Supervision et Azure Monitor
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=e00sKrTitaI&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=5
+URL vidéo PHILIT : https://www.youtube.com/watch?v=e00sKrTitaI&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
 
 * *Azure Monitor* est un service "couteau suisse" qui contient plusieurs autres services : 
     ** Azure Network watcher
@@ -1891,7 +1894,7 @@ image:AZ-104_supervision_25.jpg[]
 
 === AZ-104 EP06 : Gouvernance & Réseau (Private Link)
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=GngtOaDCb_g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=6
+URL vidéo PHILIT : https://www.youtube.com/watch?v=GngtOaDCb_g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
 
 .Constat "malheureux" : on s'occupe souvent de la gouvernance trop tard...
 [NOTE]
@@ -1918,7 +1921,7 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=GngtOaDCb_g&list=PLxf9spw2se
 * Les Management Groups sont un *scope de gouvernance* au-dessus des subscriptions : +
 Management Groups -> Subscriptions -> Resource Groups -> Resources
 
-image::AZ-104_gouvernance-reseau_01.jpg[]
+image::AZ-104_gouvernance-reseau_01.jpg[width=800]
 
 * Les Managements Groups ont 3 principaux intérêts : 
     
@@ -2240,7 +2243,7 @@ Et un client qui crée un Storage Account va avoir des données dessus qui poten
 .Définition d'un Private Endpoint
 [NOTE]
 ====
-Un Private Endpoint est une *carte réseau*, donc une *NIC* (et donc une IP privée), à qui on a *adjoint une zone DNS privée* qui *pointe sur le nom de domaime public* de vos services PaaS.
+Un Private Endpoint est une *carte réseau*, donc une *NIC* (et donc une IP privée), à qui on a *adjoint une zone DNS privée* ("*Private DNS Zone*") qui *pointe sur le nom de domaime public* de vos services PaaS.
 
 -> Le Private Endpoint est une fonctionnalité supplémentaire qui va permettre de rendre accessible des services PaaS via des IP privées.
 
@@ -2252,7 +2255,7 @@ C'est la "révolution" apportée par le Private Endpoint : là où les services 
 Le Private Endpoint *n'attribut PAS une IP privée* à un service PaaS !
 
 * -> Il permet juste à votre réseau on-premises ou à une ressource Azure d'accéder à un service PaaS via une IP privée MAIS cette IP privée n'est PAS rattachée à ce service.
-* Cette IP privée *rend accessible le service PaaS depuis celle-ci* en passant par la zone DNS privée qui pointe sur le nom de domaine public du service PaaS.
+* Cette IP privée *rend accessible le service PaaS depuis celle-ci* en passant par la zone DNS privée ("private DNS Zone") qui pointe sur le nom de domaine public du service PaaS.
 ====
 
 * Cela va permettre à une VM ou à votre réseau on-premises qui est raccordé, par exemple par une ligne ExpressRoute, d'accéder à l'IP privée représentée par la NIC (10.1.1.5 dans le schéma), et cette IP privée a une zone DNS privée qui pointe sur le nom de domaine public du service PaaS.
@@ -2294,7 +2297,7 @@ Le Private Endpoint *n'attribut PAS une IP privée* à un service PaaS !
         ** Il faut ensuite indiquer *OU mettre la carte réseau* (NIC), à savoir *dans le VNet de ma VM* : +
         image:AZ-104_gouvernance-reseau_52.jpg[width=800]
 
-        ** Là Azure va proposer de *créer dans mon Resource Group la zone DNS privée* qui servira pour la résolution de nom : +
+        ** Là Azure va proposer de *créer dans mon Resource Group la zone DNS privée* ("Private DNS zone") qui servira pour la résolution de nom : +
         image:AZ-104_gouvernance-reseau_53.jpg[width=800]
 
     * -> Créer un Private Endpoint prend plusieurs minutes
@@ -2346,12 +2349,12 @@ Se connecter la 1ere fois à une VM qui vient d'être créée est toujours plus 
             *** *La NIC de celui-ci*, NIC qui correspond à une IP privée, celle qui va être renvoyée par le nslookup une fois que le Private Endpoint aura été déployé +
             image:AZ-104_gouvernance-reseau_59.jpg[]
 
-            *** et *la zone DNS privée*, qui pointe vers le nom de domaine public de mon service PaaS (ici notre Storage Account) +
+            *** et *la zone DNS privée* ("Private DNS Zone"), qui pointe vers le nom de domaine public de mon service PaaS (ici notre Storage Account) +
             image:AZ-104_gouvernance-reseau_60.jpg[]
 
 === AZ-104 EP07 : Storage Account
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=VnVkfxUF1JQ&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=7
+URL vidéo PHILIT : https://www.youtube.com/watch?v=VnVkfxUF1JQ&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
 
 Sommaire du cours : 
 
@@ -2834,7 +2837,7 @@ image:AZ-104_storage-account_47.jpg[width=600]
 
 === AZ-104 EP08 : Virtual Machine
 
-URL vidéo PHILIT : https://www.youtube.com/watch?v=hX7Dlk8gNFU&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT&index=8
+URL vidéo PHILIT : https://www.youtube.com/watch?v=hX7Dlk8gNFU&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
 
 Agenda : 
 
@@ -2851,9 +2854,13 @@ https://learn.microsoft.com/en-us/azure/architecture/reference-architectures/n-t
 
 image:AZ-104_virtual-machine_01.jpg[]
 
+.Une VM a TOUJOURS une NIC !
+[IMPORTANT]
+====
 * *Une VM a TOUJOURS une NIC* qui lui est associée : lorsqu'une VM est créée dans Azure, une carte réseau virtuelle (NIC) est automatiquement créée et attachée à celle-ci
 
 * Cette *NIC* a *forcément une IP privée* car toute *VM Azure* doit *obligatoirement avoir une IP privée*.
+====
 
 * *Facultativement*, une *IP publique* peut également être *associée à la NIC* de la VM (le cas du présent schéma), ce qui va donner à cette dernière une portée publique (typiquement pour héberger un site web avec du IIS ou de l'Apache dessus)
 
@@ -3016,7 +3023,7 @@ Ce n'est *pas très secure*, car mon NSG va ouvrir en source Internet sur le por
 
         ** Il est donc conseillé d'utiliser d'autres services pour se connecter à votre VM : 
 
-            *** Préférez utiliser un *VPN* ou une *liaison Express Route*
+            *** Préférez utiliser un *VPN* ou une *liaison ExpressRoute*
             *** OU utilisez le *service "Just-in-time"* +
             image:AZ-104_virtual-machine_10.jpg[]
 
@@ -3162,6 +3169,12 @@ Il n'est pas possible de faire un changement "à chaud" de l'infrastructure mat�
             **** Un CSE vous permet d'exécuter un script Powershell une fois la VM créée
         *** Si un script (CSE) ou une extension met plus de *90 min* à s'exécuter / s'installer, on vous *rend la main sur la VM*.
 
+        *** Exemples d'extensions : 
+            **** *Diagnostics Azure* : Collecte des données de diagnostic (métriques, journaux) de votre VM et les envoie à Azure Monitor. Cela vous permet de surveiller les performances et de détecter les problèmes.
+            **** *Azure Disk Encryption* : Chiffre les disques de votre VM pour protéger vos données.
+            **** *NVIDIA GPU Driver* : Installe et met à jour les pilotes NVIDIA pour les machines virtuelles équipées de GPU. Essentiel pour les charges de travail liées au machine learning ou au deep learning.
+            **** Extensions pour les *agents de monitoring tiers* : Certaines extensions permettent d'installer des agents de monitoring de fournisseurs tiers (Datadog, New Relic, etc.) sur votre VM.
+
     ** Revenons maintenant dans *l'onglet Basics* pour parler de *haute disponibilité de la VM* au travers des concepts d'*Availability Set* et *Availability Zone* disponibles via l'option "Availability options" : +
     image:AZ-104_virtual-machine_36.jpg[]
 
@@ -3199,9 +3212,297 @@ DRS spreads the virtual machine workloads across vSphere hosts inside a cluster 
 * Pour plus d'informations, voir https://www.vmware.com/products/cloud-infrastructure/vsphere/drs-dpm
 ====
 
+        *** *Availability Zone* (AZ) : 
+
+            **** Rappels de l'épisode 04 sur les <<availability-zones>>
+            
+            **** *Déployer ses VMs dans une AZ* (dans les 3 zones d'une AZ pour être plus précis) va permettre de garantir un *SLA de 99.99%*, car si par exemple la Zone 1 tombe (incendie ou autres), les Zones 2 et 3 seront épargnées (grâce à une distance physique, la précense de route coupe-feu, etc.)
+            **** Comme pour les Availability Sets, cela nécessite au minimum 2 VMs (mais cela peut être plus, 3, 4, 6 VMs, etc.)
+                ***** Ici, on a créé la 1ere de nos VMs en Zone 1, ensuite la 2nd sera créée en Zone 2, la 3e en Zone 3, etc. : +
+                image:AZ-104_virtual-machine_40.jpg[width=600]
+
+[WARNING]
+====
+Si au moment de la création des VMs, vous n'avez pas pensé à les mettre dans des Availability Set ou des Availability Zone, vous ne pourrez PAS le faire après. +
+On ne peut pas "déplacer" une VM dans une AS ou une AZ *après* sa création.
+
+Il faut toujours *penser à la haute disponibilité de sa VM au moment de sa création* : que ce soit en matière de disque managé (SSD Premium, SDD Standard, HDD, etc.) ou d'Availability Set / Availability Zone (si ma région le supporte)
+====
+
+==== Azure Bastion
+
+* Si je souhaite accéder à ma VM, MAIS que :
+    ** je n'ai pas de VPN vers l'IP privée de ma VM (donc vers un subnet / VNet Azure)
+    ** je n'ai pas de liaison ExpressRoute
+    ** ma VM n'a pas d'IP publique
+
+-> Dans ce cas, normalement, je ne peux pas y accéder... Et c'est là que l'Azure Bastion va entrer en jeu.
+
+* Le Bastion ne sert QUE à accéder à des VMs Azure sur les ports d'administration *uniquement* : RDP (port 3389) ou SSH (port 22)
+    ** On n'utilise PAS un Bastion pour faire du web ou accéder à une BDD SQL sur le port 1433.
+
+* Concrètement, on va vous permettre d'accéder à la VM via le *service PaaS Azure Bastion*, qui *porte une IP publique* que l'on ne connaît même pas.
+    ** Depuis le portail Azure, on va faire un "connect" à la VM, mais au lieu d'accéder à la VM via son IP privée, on va *y accéder via l'IP publique du Bastion* qui va encapsuler le flux en *TLS* dans le navigateur (donc sur du HTTPS)
+
+* Le Bastion va permettre de *centraliser tous vos actes d'administration* dans un seul et même service Azure
+* Et ce Bastion va être accessible directement depuis le portail Azure +
+image:AZ-104_virtual-machine_41.jpg[width=800]
+
+[IMPORTANT]
+====
+-> L'Azure Bastion va permettre via son IP publique d'*encapsuler l'acte d'administration* vers une VM qui a une IP privée.
+
+Prévoir un *coût de ~100€ / mois pour 100 connexion simultanées*.
+====
+
+* Un Bastion peut recevoir entre 50 et 100 connexions simultanées
+
+*DEMO*
+
+    * Je commence par dissocier l'IP publique de ma VM : +
+    image:AZ-104_virtual-machine_42.jpg[width=1000]
+    image:AZ-104_virtual-machine_43.jpg[width=1000]
+        ** et, dans cette démo, il n'y a PAS de VPN ou d'ExpressRoute existant vers le VNet de ma VM
+
+    * A partir de là, si je tente un "connect" en utilisant le protocole RDP, ça ne *fonctionnera pas* car la VM n'a *qu'une IP privée qui n'est pas accessible depuis le Net* : +
+    image:AZ-104_virtual-machine_44.jpg[width=1000]
+
+    * C'est dans ce cas qu'on va pouvoir utiliser le Bastion : +
+    image:AZ-104_virtual-machine_45.jpg[width=600]
+        ** Le Bastion nécessite un compte pour accéder à la VM : +
+        image:AZ-104_virtual-machine_46.jpg[width=600]
+    
+    * Après un "connect" en utilisant le Bastion, un nouvel onglet va être ouvert dans le navigateur, qui va héberger une nouvelle session sur la VM (la logique est d'accéder directement dans le navigateur à la VM)
+        ** 1ere chose : on va vous proposer de mapper le presse-papiers, pour copier du texte et des images sur la VM : +
+        image:AZ-104_virtual-machine_47.jpg[width=600]
+
+    * Dans le menu "Sessions" du Bastion on va retrouver les sessions ouvertes : +
+    image:AZ-104_virtual-machine_48.jpg[width=600]
+    image:AZ-104_virtual-machine_49.jpg[width=600]
+
+    * Le menu "Configuration" permet de : 
+        ** scaler le Bastion, via le choix du Tier "Standard"
+        ** de mapper le Copy and paste
+        ** et même d'autoriser la connexion à la VM non plus depuis le navigateur (via un "Connect") mais depuis le client natif Microsoft (RDP) ou Linux (SSH).
+            *** Pour plus de détails, voir la documentation Azure : https://learn.microsoft.com/en-us/azure/bastion/connect-vm-native-client-linux
+
+==== Virtual Machine Scale Sets (VMSS)
+
+* 2 types de scalabilités : +
+image:AZ-104_virtual-machine_50.jpg[width=600]
+
+    ** *Vertical Scaling* or *scale-up* / *scale-down* : ajout (*"scale-up"*) ou suppression (*"scale-down"*) de ressources (CPU ou RAM) sur *LA* VM (comprendre par là 1 SEULE VM). +
+    By example, if you have 1 core CPU and 4 GB memory and you want to upgrade this configuration to 2 core CPU and 8 GB memory, this is called as scale-up. You can reduce the configuration back to baseline which is called as scale-down.
++
+[NOTE]
+====
+Le vertical scaling est toujours opéré *manuellement* : +
+image:AZ-104_virtual-machine_54.jpg[width=600]
+====
+
+    ** *Horizontal Scaling* or *scale-out* / *scale-in* : Ici, on va *dupliquer le nombre de VMs* (*"scale-out"*), que l'on va appeler des instances, pour répondre à une montée en charge. +
+    Et quand la charge va baisser, on va *réduire le nombre d'instances* (*"scale-in"*) associée à cette VM.
+
+* Dans Azure, pour faire de la *scalabilité horizontale*, on va utiliser un *Virtual Machine Scale Sets* (VMSS)
+
+image:AZ-104_virtual-machine_51.jpg[width=600] 
+image:AZ-104_virtual-machine_52.jpg[width=600]
+
+* Dans un *VMSS Azure*, tous les *noeuds* auront la *même taille* et le *même OS*.
+
+* 2 manière de *scaler horizontalement* dans *VMSS* : +
+image:AZ-104_virtual-machine_53.jpg[width=600]
+
+    ** scaling manuel : c'est nous qui surveillons les métriques de notre cluster VMSS et scalons en fonction de ces derniers
+    ** scaling custom : via la définition de *règles de scaling*. +
+    Exemples : 
+        *** scale-out : "si on est à 75% de CPU pendant 10 minutes, alors on ajoute 1 instance au cluster VMSS"
+        *** scale-in : "si on passe à 25% de CPU, alors on diminue de 1 le nombre d'instances du cluster VMSS"
+    
+    ** Le nombre d'instances peut varier d'un minimum de 1 à un maximum de 10.
+
+* On utilisera un *load balancer* (*Azure Application Gateway* ou *Azure Load Balancer*) pour rendre le VMSS plus efficace dans la répartition des requêtes entre ses différents noeuds.
+        
+==== Cloud Shell, PowerShell & Bash (Azure CLI)
+        
+* *Cloud Shell* : un *interpréteur Bash (également appelé Azure CLI) ou Powershell* disponible directement dans le navigateur. +
+image:AZ-104_virtual-machine_55.jpg[width=600]
+
+* *Description de la syntaxe des cmdlets PowerShell* : https://learn.microsoft.com/en-us/powershell/azure/get-started-azureps
+
+    ** "Azure PowerShell cmdlets follow the standard PowerShell naming convention of *"Verb-Noun"*. +
+    The verb describes the action (e.g., New, Get, Set, Remove), while the noun represents the resource type (e.g., AzVM, AzKeyVaultCertificate, AzFirewall, AzVirtualNetworkGateway). Nouns in Azure PowerShell start with the prefix Az."
+    ** To discover commands, use the `Get-Command` cmdlet. For instance, to list all commands related to virtual machines : +
+    `Get-Command -Verb Get -Noun AzVM* -Module Az.Compute`
+
+* Description des actions associées au verbes : 
+    ** *set* : éditer quelque chose d'existant
+    ** *remove* : supprimer quelque chose d'existant
+    ** *new* : créer quelque chose de nouveau
+    ** *get* : obtenir des infos sur quelque chose d'existant
+
+* Exemples des commandes PowerShell : 
+    ** `get-azvm` : pour lister toutes les VMs de ma subscription
+    ** `set-azvm` : pour éditer la configuration d'une VM (ajout de carte réseau, ajout d'un disque, pour changer sa taille, etc.)
+
+[TIP]
+====
+* En cas de doute sur une commande, utilisez *"tab"* pour demander l'*auto-complétion* 😉
+* La commande `history` permet d'afficher toutes les commandes tapées précédemment : +
+image:AZ-104_virtual-machine_57.jpg[width=250]
+====
+
+* *Cloud Shell* est également *livré avec un éditeur*, que l'on ouvre avec la commande *"code ."* : +
+image:AZ-104_virtual-machine_56.jpg[width=600]
+
+* *Description de la syntaxe des cmdlets Bash / Azure CLI* : https://learn.microsoft.com/en-us/cli/azure/what-is-azure-cli
+
+    ** The Azure CLI syntax follows a simple reference *"name - command - parameter - parameter value"* pattern. 
+    ** For example, switching between subscriptions is often a common task. Here's the syntax : +
+    `az account set --subscription "my subscription name"`
+[TIP]
+====
+En cas de doute sur une commande, tapez la commande `az` pour lister toutes les commandes associées à Azure 😉 +
+image:AZ-104_virtual-machine_58.jpg[width=600]
+====
+
+NOTE: *Cloud Shell* tourne dans une *VM Linux*, qui va être *automatiquement fermée* (système de timeout) après une certaine période d'inactivité.
+
+=== AZ-104 EP09 : Web App, ACI & AKS
+
+URL vidéo PHILIT : https://www.youtube.com/watch?v=rPzk0YH36AU&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
+
+Agenda : 
+
+    * Azure App Service Plans
+    * Azure App Service
+    * Container Instances
+    * Azure Kubernetes Services
+
+==== Azure App Service Plan
+
+* Un *Service Plan* Azure représente globablement 2 choses : +
+image:AZ-104_web-app-ACI-AKS_01.jpg[width=600]
+
+    ** *Puissance* : La possibilité de définir la *puissance* que l'on va attribuer à des services PaaS Azure : CPU, RAM, espace disque
+    ** *Fonctionnalités* : 
+        *** Scalabilité : à combien d'instances je vais pouvoir scaler mon service PaaS ?
+        *** Custom domain et SSL (possibilité de mettre mon propre certificat SSL)
+        *** etc.
+
+* Et cela va pouvoir être attribué à 1 OU *plusieurs Web App* (donc des sites web managés par Microsoft)
+    ** Si un Service Plan est attribué à plusieurs Web App, *les ressources du Service Plan vont être partagées* en fonction des besoins entre ces différentes Web App.
+
+[IMPORTANT]
+====
+* 1 Web App DOIT toujours être rattachée à 1 Service Plan : 1 Web App sans Service Plan, ça n'existe PAS
+* 1 Service Plan peut être rattaché à plusieurs Web App
+====
+
+*DEMO*
+
+* Recherche de "Web App" dans la marketplace Azure : +
+image:AZ-104_web-app-ACI-AKS_02.jpg[width=600]
+
+* Création de la Web App *AVEC* le Service Plan associé (ici un P1v2) : +
+image:AZ-104_web-app-ACI-AKS_03.jpg[width=1000]
+
+* Pour information, le *Service Plan "Isolated"* permet d'avoir une Web App avec une *IP privée*. +
+Donc nativement le service va être inclus dans un subnet, lui-même inclus dans un VNet, et donc ma Web App va avoir une IP privée.
+    ** Pour tous les autres Service Plan, on est dans le cas d'un service PaaS, et qui dit service PaaS dit IP publique
+    ** Ce Service Plan coûte *plus cher* que les autres ("Dev / Test" et "Production") : +
+    image:AZ-104_web-app-ACI-AKS_04.jpg[width=600]
+        *** Cela s'explique car les Service Plan "Isolated" offrent des *ressources de calcul dédiées* (CPU, RAM) et un *réseau virtuel isolé*, là où les Service Plan "Dev / Test" et "Production" partagent des ressources avec d'autres applications. 
+            ****  "Dev / Test" et "Production" sont adaptés aux environnements de développement et de test, ainsi qu'aux applications qui n'ont pas d'exigences de performance critiques.
+            **** "Isolated" est à utiliser si vous avez besoin d'un environnement de production hautement disponible et sécurisé.
+
+NOTE: Le Service Plan "Isolated" ne fait pas partie du programme de l'AZ-104
+
+* Le *nom de la Web App* doit être *unique sur Internet* (cas du message d'erreur : "The app name XXX is not available")
+    ** Par défaut, le nom de domaine de la Web App correspond au pattern "*XXX.azurewebsites.net*"
+
+* Choix du *mode de déploiement* :
+
+    ** *Code* : Déploie directement votre code source (HTML, CSS, JavaScript, etc.) sur une plateforme Azure préconfigurée. Idéal pour les applications simples qui n'a pas de dépendances complexes et ne nécessite pas d'environnement d'exécution spécifique.
+
+    ** *Docker Container* : Déploie une image Docker contenant votre application et toutes ses dépendances. +
+    Offre une grande flexibilité et un environnement isolé. Pour des environnements complexes.
+
+    ** *Static Web App* : Déploie des applications web statiques (SPA, JAMstack (JavaScript / API / Markup) ). +
+    Permet de déployer directement le contenu statique de votre application, ainsi que des fonctions API backend si nécessaire. +
+    Pour des static Web App (applications front-end construites avec des frameworks comme React, Angular ou Vue.js) ou des applications Serverless (si on veut combiner un front-end statique avec des fonctions backend serverless)
+
+* Choix du *runtime* : Microsoft propose un certain nombre, mais limité, de possibilités
+    ** Par exemple, il n'est pas possible de choisir du PHP 5.5 (qui n'est plus maintenu)
+    ** Et quand une date est déjà connue, je suis prévenu à l'avance de la fin de vie d'un runtime : +
+    image:AZ-104_web-app-ACI-AKS_05.jpg[width=600]
+
+[IMPORTANT]
+====
+Une fois que j'ai créé ma Web App et son *Service Plan*, je peux également *réutiliser ce dernier* pour d'autres Web App SI elles ont été créées dans la *même région* que ce Service Plan. +
+-> Pas possible de créer une Web App en France Central avec un Service Plan aux US.
+====
+
+* Différents possibilités de scaling sont disponibles pour l'App Service Plan (scale-up et scale-out) : +
+image:AZ-104_web-app-ACI-AKS_07.jpg[width=800]
+    ** Et le Service Plan peut être changé à tout moment
+
+* Détails des différents *tiers des Service Plans* (Azure App Service Plans Tiers) : +
+image:AZ-104_web-app-ACI-AKS_06.jpg[width=800]
+
+TIP: Philippe conseille de l'apprendre pour la certification AZ-104
+
+* La *mise à jour (déploiement d'une nouvelle version) de la Web App* se configure via le *menu "Deployment Center"*
+    ** Dans l'onglet "Settings", on pourra mettre en place du *continuous deployement* en *se branchant à un SCM* (Cloud Git Repository comme GitHub, Bitbucket ou GitLab) +
+    image:AZ-104_web-app-ACI-AKS_08.jpg[width=800]
+    ** Via l'onglet "FTPS credentials", on pourra configurer du *FTPS* pour mettre à jour la Web App à partir d'un FileZilla par exemple : +
+    image:AZ-104_web-app-ACI-AKS_09.jpg[width=800]
+
+* Les "*slots*" (*menu "Deployment slots"*) représentent une *copie de la configuration de votre Web App* (mais *PAS du contenu* : HTML, CSS, JavaScript, etc.) sur laquelle vous allez pouvoir travailler +
+image:AZ-104_web-app-ACI-AKS_10.jpg[width=800]
+    ** Cela permet par exemple de donner une copie de sa Web App à son équipe de Dev afin qu'ils puissent travailler sur une version de PrePROD. +
+    Puis, quand cette version de PrePROD est prête, de la promouvoir en PROD
+    
+    ** Définition du portail Azure des Deployment slots : +
+    "Deployment slots are live apps with their own hostnames. App content and configurations elements can be swapped between two deployment slots, including the production slot."
+        *** Et il est bien préciser dans la documentation Azure (https://learn.microsoft.com/en-us/azure/app-service/deploy-staging-slots) : +
+        "The new deployment slot has *no content*, even if you clone the settings from a different slot"
+
+    ** Exemple de création d'un slot de PrePROD : +
+    image:AZ-104_web-app-ACI-AKS_11.jpg[width=1000]
+
+    ** Puis, quand je vais vouloir promouvoir cette autre version et la passer en PROD, je vais avoir 2 possibilités :
+
+        *** *Faire un "swap"* (une "permutation") d'un slot à un autre : dans ce cas, on bascule totalement d'un slot à l'autre. +
+        image:AZ-104_web-app-ACI-AKS_13.jpg[width=1000]
+            **** mon slot "target" va toujours être ma PROD, et mon slot "source" l'autre slot (ma PrePROD dans l'exemple précédent). +
+            Le swap fait en sorte d'éviter tout downtime de l'application en PROD.
+            **** Pour le détails des opérations du swap, voir la documentation Azure : +
+            https://learn.microsoft.com/en-us/azure/app-service/deploy-staging-slots?tabs=portal#what-happens-during-a-swap
++
+[NOTE]
+====
+Remarquez le warning d'Azure concernant le swap : +
+"Before you swap an app from a deployment slot into production, make sure that *production is your target slot* and that *all settings in the source slot are configured exactly as you want to have them in production*."
+====
+
+        *** *Router uniquement une partie du traffic* vers votre nouveau slot : +
+        image:AZ-104_web-app-ACI-AKS_14.jpg[width=1000]
 
 
-TO BE COMPLETED 36:40
+.Référence au Blue / Green deployment
+[NOTE]
+====
+Remarquez que l'icône du "Deployment Slots" est une référence directe au concept de *blue / green deployment* : +
+image:AZ-104_web-app-ACI-AKS_12.jpg[width=200]
+
+Rappel de Wikipedia : https://en.wikipedia.org/wiki/Blue%E2%80%93green_deployment +
+_"Blue-green deployment is a method of installing changes to a web, app, or database server by *swapping alternating production and staging servers*."_
+====
+
+* Via le *menu "Configuration"*, il est également possible de *changer le runtime* de la web app à tout moment : +
+image:AZ-104_web-app-ACI-AKS_15.jpg[width=1000]
+    ** Attention, cela implique un *redémarrage de la web app*.
 
 
 
@@ -3215,7 +3516,13 @@ TO BE COMPLETED 36:40
 
 
 
-TO BE COMPLETED
+
+
+
+
+
+
+TO BE COMPLETED 13:15
 
 
 
