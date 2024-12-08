@@ -3296,7 +3296,7 @@ image:AZ-104_virtual-machine_50.jpg[width=600]
 +
 [NOTE]
 ====
-Le vertical scaling est toujours opéré *manuellement* : +
+Le *vertical scaling* (scale-up) est toujours opéré *manuellement* : +
 image:AZ-104_virtual-machine_54.jpg[width=600]
 ====
 
@@ -3313,8 +3313,8 @@ image:AZ-104_virtual-machine_52.jpg[width=600]
 * 2 manière de *scaler horizontalement* dans *VMSS* : +
 image:AZ-104_virtual-machine_53.jpg[width=600]
 
-    ** scaling manuel : c'est nous qui surveillons les métriques de notre cluster VMSS et scalons en fonction de ces derniers
-    ** scaling custom : via la définition de *règles de scaling*. +
+    ** *scaling manuel* : c'est nous qui surveillons les métriques de notre cluster VMSS et scalons en fonction de ces derniers
+    ** *scaling custom* : via la définition de *règles de scaling*. +
     Exemples : 
         *** scale-out : "si on est à 75% de CPU pendant 10 minutes, alors on ajoute 1 instance au cluster VMSS"
         *** scale-in : "si on passe à 25% de CPU, alors on diminue de 1 le nombre d'instances du cluster VMSS"
@@ -3443,9 +3443,17 @@ Une fois que j'ai créé ma Web App et son *Service Plan*, je peux également *r
 -> Pas possible de créer une Web App en France Central avec un Service Plan aux US.
 ====
 
-* Différents possibilités de scaling sont disponibles pour l'App Service Plan (scale-up et scale-out) : +
+* Différentes possibilités de scaling sont disponibles pour l'App Service Plan (scale-up et scale-out) : +
 image:AZ-104_web-app-ACI-AKS_07.jpg[width=800]
     ** Et le Service Plan peut être changé à tout moment
+
+* Via le menu "Scale out (App Service Plan)", 2 possibilités d'horizontal scaling sont proposées : 
+    ** *scaling manuel* : +
+    image:AZ-104_web-app-ACI-AKS_28.jpg[width=800]
+
+    ** *custom autoscale* basé sur des métriques que vous allez définir dans une règle : +
+    image:AZ-104_web-app-ACI-AKS_29.jpg[width=800]
+        *** A ce niveau, *la web app se configure comme un VMSS* : c'est la même interface et on retrouve les mêmes métriques. 
 
 * Détails des différents *tiers des Service Plans* (Azure App Service Plans Tiers) : +
 image:AZ-104_web-app-ACI-AKS_06.jpg[width=800]
@@ -3504,25 +3512,104 @@ _"Blue-green deployment is a method of installing changes to a web, app, or data
 image:AZ-104_web-app-ACI-AKS_15.jpg[width=1000]
     ** Attention, cela implique un *redémarrage de la web app*.
 
+* Par défaut une web app est *accessible à tous en accès anonyme*, dès lors que l'on connaît son URL. +
+Via le *menu "Authentication"*, je vais pouvoir sécuriser l'accès à ma web app et *forcer l'accès à l'aide de credentials*. +
+image:AZ-104_web-app-ACI-AKS_16.jpg[width=1000]
 
+    ** Je vais pouvoir choisir un *Identity provider compatible OpenID Connect* (OIDC) : +
+    image:AZ-104_web-app-ACI-AKS_17.jpg[width=600]
 
+    ** Dans cet exemple, l'authentification des utilisateurs va être *déléguée à l'Azure AD* (Entra ID, le 1er choix de la liste précédente) : +
+    image:AZ-104_web-app-ACI-AKS_18.jpg[width=600]
+        1. Je vais créer un compte de service (*service principal*) qui représente ma web app dans mon Azure AD (cad dans mon tenant). +
+        Je spécifie le nom de mon service principal qui réprésente ma web app dans le tenant (ici "Webappdemo69pp-twitch")
+        2. J'indique *les accès anonymes à ma web app ne sont plus possibles* et qu'une authentification est nécessaire
++
+NOTE: Cet enregistrement de la web app dans le tenant prend quelques minutes
 
+* Via le *menu "Backup"*, il va être possible de backuper la web app +
+image:AZ-104_web-app-ACI-AKS_19.jpg[width=1000]
+    ** En fonction du Service Plan choisi, il va être possible de la backuper un certain nombre fois par jour
+    ** Ce backup va pouvoir être planifié via l'option "Set schedule"
+    ** Via *l'onglet "Advanced"*, si votre web app est liée à une BDD SQL Database ou MySQL, on va pouvoir, dans une même interface, *backuper la web app ET la BDD managées* par Microsoft : +
+    image:AZ-104_web-app-ACI-AKS_20.jpg[width=400]
 
+* Via le *menu "Custom domains"*, plutôt que d'utiliser un nom de domaine en "*.azurewebsites.net", on va pouvoir utiliser son propre nom de domaine +
+image:AZ-104_web-app-ACI-AKS_21.jpg[width=800]
+    ** soit on en possède déjà que l'on peut renseigner via la fonctionnalité "Add custom domain"
+    ** soit on a la possibilité d'en acheter un à Microsoft via "Buy App Service Domain" et moyennant 1$ / mois ou 12$ / an +
+    image:AZ-104_web-app-ACI-AKS_22.jpg[width=600]
+    image:AZ-104_web-app-ACI-AKS_23.jpg[width=600]
+        *** Cela permet de passer par Microsoft pour acheter un nom de domain qui sera attribué à sa web app
 
+* Et si j'attribue un nom de domaine personnalité à ma web app, alors *son certificat SSL va devoir changer*. +
+Et dans ce cas, via le *menu "TLS / SSL settings"*, vous avez la possibilité : 
+    ** d'*acheter un certificat SSL à Microsoft*
+    ** ou de *générer un CSR* (*Certificate Signing Request*) à partir de sa web app Azure et de l'utiliser pour récupérer un certificat auprès d'un provider (comme Let's Encrypt) puis d'importer ce certificat dans votre web app. +
+    image:AZ-104_web-app-ACI-AKS_24.jpg[width=1000]
 
+.Quelques rappels sur les certificats SSL
+[NOTE]
+====
+* Un *certificat SSL* (Secure Sockets Layer) est un fichier servant à authentifier un site web et à chiffrer les données transmises entre le serveur (votre application web) et le navigateur de l'utilisateur.
 
+* *Certificat par défaut* : Lorsque vous utilisez le nom de domaine par défaut fourni par Azure (de la forme "<votre-application>.azurewebsites.net"), votre application bénéficie d'un certificat SSL générique mis en place par Azure.
+* *Certificat personnalisé* : Lorsque vous ajoutez un custom domain, vous devez fournir un certificat SSL spécifique à ce dernier.
 
+Il existe *2 moyens d'obtenir un certificat SSL personnalisé* : 
 
+    * *Acheter un certificat* SSL auprès de Microsoft
 
+    * *Générer un CSR* (Certificate Signing Request), s'en servir pour faire générer un certificat personnalisé et importer ce dernier.
+        ** Le CSR CSR (Certificate Signing Request) est une requête de signature de certificat que vous générez à partir de votre application Azure. Elle contient des informations sur votre domaine et votre organisation.
+        ** Ce CSR doit ensuite être envoyé à votre fournisseur de certificats (comme Let's Encrypt ou GlobalSign) afin qu'il en vérifie les informations et génère le certificat correspondant.
+        ** Le certificat obtenu peut ensuite être importé dans votre web app Azure.
+====
 
+* Une web app Azure est un service managé, mais via le *menu "Advanced Tools"*, vous avez la possibilité d'accéder à une *console Kudu* qu'Azure va lancer pour vous : +
+image:AZ-104_web-app-ACI-AKS_25.jpg[width=800]
 
+    ** Via cette console Kudu, dans son navigateur, on va pouvoir *lancer une interface de ligne de commande* (CMD ou PowerShell) et *manipuler l'OS de la web app*. +
+    image:AZ-104_web-app-ACI-AKS_26.jpg[width=800]
+        *** Manipuler l'OS *dans une certaine limite* vu que tout est cloisonné par Microsoft. +
+        Néanmoins, on va pouvoir visualiser la liste de tous les process, les killer si besoin, etc. +
+        image:AZ-104_web-app-ACI-AKS_27.jpg[width=800]
 
+.Plateforme Kudu
+[NOTE]
+====
+*Kudu* est une plateforme open-source développée par Microsoft pour gérer les déploiements et la maintenance des applications sur Azure. Elle fournit une interface en ligne de commande (CLI) qui vous permet d'interagir directement avec les fichiers de son application, de configurer des tâches automatisées, de déboguer des problèmes, etc.
+====
 
+==== Azure Container Instances (ACI)
 
+* Azure Container Instances (ACI) est ce qui *permet à un container Docker d'être instancié sur un service PaaS de Microsoft*, qui est une VM MAIS une VM managée.
+    ** A 1 container Docker va correspondre 1 instance du service ACI qui va l'exécuter.
+    ** Donc si vous avez un site web conteneurisé, vous allez pouvoir l'instancié très rapidement sur de l'ACI.
 
+image:AZ-104_web-app-ACI-AKS_30.jpg[width=400]
 
+* Les avantages de l'ACI : 
+    ** *rapidité d'instanciation* : il ne faut que quelques secondes pour instancier votre site web surle service ACI
+    ** possibilité de *définir la "size" de votre container Docker* (CPU et RAM qui vont être attribués au container Docker)
 
-TO BE COMPLETED 13:15
+* Les inconvénients de l'ACI : 
+    ** *PAS de scaling*
+        *** MAIS il est possible de grouper les containers ACI pour pouvoir instancier un site web qui communique avec une BDD elle aussi basée sur un container Docker.
+
+*DEMO*
+
+image:AZ-104_web-app-ACI-AKS_31.jpg[width=800]
+
+* Pour instancier mon ACI, je peux me baser sur une image qui se trouver : 
+    ** dans l'Azure Container Registry : le repo d'images Docker d'Azure
+    ** dans un registry extérieur
+    ** dans les "quickstart images" d'Azure : dans lesquelles on va trouver des images de type "hello world"
+
+* Via l'option "*Change size*", on va pouvoir modifier le nombre de CPU et de RAM attribués au container, et même lui *adjoindre un GPU* : +
+image:AZ-104_web-app-ACI-AKS_32.jpg[width=1000]
+
+TO BE COMPLETED 29:50
 
 
 
