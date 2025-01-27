@@ -120,7 +120,7 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=JoGL_Q7ihG8&list=PLxf9spw2se
 
     ** *Identité synchronisée* : elle est issue de votre AD on-premises (ce dernier est souvent représenté par un triangle)
         *** cet AD on-premises est bien souvent au nom de la société : toto.com
-        *** cet AD va contenir : 
+        *** cet AD on-premises va contenir : 
             **** des DC : Domain Controller / contrôleurs de domaines
                 ***** un DC est une version server de notre système d'exploitation (OS). +
                 Donc Windows server 2016 / 2019 peut devenir un contrôleur de domaine en ajoutant le rôle.
@@ -243,12 +243,14 @@ Puis, une fois connecté, vous allez pouvoir utiliser l'un des protocoles suivan
 * Donc il ne faut pas croire que le tenant AAD va permettre de gérer tous les cas de figures, on peut *déléguer l'authentification de certains types d'utilisateurs pour certaines applications à des fournisseurs d'identités externes*.
     ** C'est très utile lors de la création d'une *web app* qui a *par défaut* un *accès anonyme* : n'importe qui connaissant son IP publique ou son nom de domaine peut y accéder. Avec ce système, on va pouvoir rajouter une surcouche d'authentification à la web app pour lui permettre d'être authentifiée par des utilisateurs particuliers
 
-* *DEMO* de la création de cette *surcouche d'authentification pour une Web app* : https://youtu.be/JoGL_Q7ihG8?t=3069[] 
+* *DEMO* de la création de cette *surcouche d'authentification pour une Web app* (51:09) : https://youtu.be/JoGL_Q7ihG8?t=3069[] 
 +
-video::JoGL_Q7ihG8?t=3069[youtube, width=800, height=600]
+video::JoGL_Q7ihG8[youtube, width=800, height=600, start=3069]
 
     ** Pour ce faire, on va utiliser un service principal qui va représenter cette web app dans l'Azure AD
     ** Création d'une *web app* : 1 à 2 min et *par défaut elle va avoir un accès public*
+
+TIP: Voir mes notes de l'EP09 pour trouver les explications de l'ajout de cette <<web-app-add-authentication-layer>> 😉
 
 .Rappel sur les web apps
 [NOTE]
@@ -2078,7 +2080,7 @@ image:AZ-104_gouvernance-reseau_18.jpg[width=600]
 
 ==== Modèle RBAC dans Azure
 
-* L'*Azure Active Directory* (renommé Azure Entra ID) est un *annuaire* contenant des *users* et des *groups*
+* L'*Azure Active Directory* (Azure AD, ou AAD, renommé depuis Azure Entra ID) est un *annuaire* contenant des *users* et des *groups*
     ** Les users de l'AAD vont être associés à un certain nombre de subscriptions
     ** Les users déclarés dans votre tenant peuvent recevoir des droits sur ces subscriptions qui sont liées au tenant
     ** Le tenant est donc rattaché à plusieurs subscriptions Azure, et une subscription Azure a comme référentiel d'identités le tenant.
@@ -3512,6 +3514,7 @@ _"Blue-green deployment is a method of installing changes to a web, app, or data
 image:AZ-104_web-app-ACI-AKS_15.jpg[width=1000]
     ** Attention, cela implique un *redémarrage de la web app*.
 
+[[web-app-add-authentication-layer, Surcouche d'authentification d'une Web App (App Service)]]
 * Par défaut une web app est *accessible à tous en accès anonyme*, dès lors que l'on connaît son URL. +
 Via le *menu "Authentication"*, je vais pouvoir sécuriser l'accès à ma web app et *forcer l'accès à l'aide de credentials*. +
 image:AZ-104_web-app-ACI-AKS_16.jpg[width=1000]
@@ -3561,7 +3564,7 @@ Il existe *2 moyens d'obtenir un certificat SSL personnalisé* :
     * *Acheter un certificat* SSL auprès de Microsoft
 
     * *Générer un CSR* (Certificate Signing Request), s'en servir pour faire générer un certificat personnalisé et importer ce dernier.
-        ** Le CSR CSR (Certificate Signing Request) est une requête de signature de certificat que vous générez à partir de votre application Azure. Elle contient des informations sur votre domaine et votre organisation.
+        ** Le CSR (Certificate Signing Request) est une requête de signature de certificat que vous générez à partir de votre application Azure. Elle contient des informations sur votre domaine et votre organisation.
         ** Ce CSR doit ensuite être envoyé à votre fournisseur de certificats (comme Let's Encrypt ou GlobalSign) afin qu'il en vérifie les informations et génère le certificat correspondant.
         ** Le certificat obtenu peut ensuite être importé dans votre web app Azure.
 ====
@@ -3591,6 +3594,7 @@ image:AZ-104_web-app-ACI-AKS_30.jpg[width=400]
 
 * Les avantages de l'ACI : 
     ** *rapidité d'instanciation* : il ne faut que quelques secondes pour instancier votre site web surle service ACI
+        *** 🔥 La rapidité d'instanciation d'ACI va être extrêmement utile dans le cadre d'AKS (pour le "burst ACI") 🔥
     ** possibilité de *définir la "size" de votre container Docker* (CPU et RAM qui vont être attribués au container Docker)
 
 * Les inconvénients de l'ACI : 
@@ -3609,7 +3613,323 @@ image:AZ-104_web-app-ACI-AKS_31.jpg[width=800]
 * Via l'option "*Change size*", on va pouvoir modifier le nombre de CPU et de RAM attribués au container, et même lui *adjoindre un GPU* : +
 image:AZ-104_web-app-ACI-AKS_32.jpg[width=1000]
 
-TO BE COMPLETED 29:50
+image:AZ-104_web-app-ACI-AKS_33.jpg[width=1000]
+
+.Azure App Service (web app) vs Azure Container Instances (ACI)
+[NOTE]
+====
+La web app (Azure App Service) ne gère QUE du web, elle n'écoute QUE sur 2 ports : 80 et 443. +
+-> Donc, si on veut instancier une BDD SQL, on ne pourra pas le faire sur une web app MAIS ce sera possible sur un ACI.
+====
+
+==== Azure Kubernetes Service (AKS)
+
+image:AZ-104_web-app-ACI-AKS_35.jpg[width=1000]
+
+Description de l'image : 
+
+1. En bas à gauche, le développeur avec son *poste de travail sur lequel il a installé Docker*.
+    ** Il va *créer une application*, que l'on va appeler "App1"
+    ** Il va faire tourner cette application sur son poste de travail, MAIS son but final est que cette application soit disponible sur Internet
+
+    ** DONC, pour ce faire, notre dev va commencer par *envoyer l'image de son application dans l'ACR*, l'Azure Container Registry, un repo d'image Docker managé par Microsoft. +
+    Et pour cela il va : 
+        ** *versioner son application* à l'aide de la commande `docker tag`, ce qui va créer une version "App1 v1"
+        ** puis *envoyer l'image docker versionnée* de son application dans l'ACR à l'aide de la commande `docker push` +
+        image:AZ-104_web-app-ACI-AKS_34.jpg[width=300]
+
+2. En parallèle, l'administrateur de la souscription va créer un cluster *AKS* (Azure Kubernetes Service), qui est un service managé par Microsoft (*PaaS*).
+    ** Il s'agit d'un service PaaS pour lequel on peut avoir accès au backend (VM, VMSS, UDR, NSG, etc.) via un Resource Group.
+    ** Avant tout, l'AKS a besoin de truster l'ACR (création d'une relation de confiance) au travers d'un *compte de service* (*Service Principal*)
+    
+    ** L'AKS est composé des éléments suivants : 
+        *** Un *load balancer*, autre service managé par Microsoft : qui peut être un Azure Application Gateway (couche 7 modèle OSI) ou un Azure Load Balancer (ALB)
+        *** Ce load balancer va s'appuyer sur un *VMSS*
+            **** Comme déjà expliqué précédemment un VMSS (Virtual Machines Scale Set) est un *ensemble de noeuds*, qui sont ni plus ni moins que *des VMs* gérées par Microsoft.
+            **** Tous ces noeuds sont regroupés dans un *pool de noeuds*, c'est à dire que *tous les noeuds* ont la *même taille* (même nombre de CPUs et de RAM) et le *même OS*. +
+            Exemple : +
+            VM1 a 2 CPUs, 4 Go de RAM et tourne sur Windows, VM2 a 2 CPUs, 4 Go de RAM et tourne sur Windows, etc.
+
+3. Le développeur va créer un fichier Manifest, au format YAML (du semi-structuré), contenant une description de ce que je veux exécuter sur le cluster Kubernetes (la manière, le "comment" exécuter mon application sur le cluster Kubernetes). +
+On va retrouver dans ce fichier YAML : 
+    ** l'ACR qui va être utilisé (un nom de domaine ".io" unique)
+    ** La version exacte de l'image de mon application que je veux instancier sur le cluster Kubernetes ("App1v1" dans notre exemple)
+    ** Les ports d'écoute de mon application
+    ** Les règles de scalabilité
+
+4. Le développeur va utiliser la commande `kubectl apply` en lui passant en paramètre le fichier Manifest. +
+A l'aide de ce Manifest, le cluster Kubernetes va *créer sur VM1 un "pod"* qui est *une instance de mon application "App1v1"*. +
+Et Kubernetes va en fait pouvoir instancier ce même pod (cette même application) sur plusieurs noeuds (nos VMs). +
+Et sur un même noeud, il sera possible d'avoir plusieurs instances de son application (donc plusieurs pods).
+    ** Et dans cette logique, on va avoir des *règles de scalabilité* qui vont s'appliquer et aux *pods* ET aux *VMs*.
+    ** Donc si à un moment mes VMs (VM1, VM2, VM3 et VM4 dans notre exemple) sont surchargées d'instances de mon application, alors le cluster Kubernetes va instancier une VM de plus (ou plusieurs VMs de plus). +
+    Et sur ces nouveaux noeuds (VMs), il va instancier mon application. +
+    Il s'agit ici d'une *scalabilité horizontale*. +
+    -> Donc, quand il y a une montée en charge, on va créer de nouvelles instances, soit des VMs, soit des applications conteneurisés qui sont des pods. +
+    image:AZ-104_web-app-ACI-AKS_36.jpg[width=600]
+
+.Le "Burst ACI"
+IMPORTANT: Pour *"mieux" répondre à une montée en charge*, il va être possible d'*utiliser AKS ET ACI*
+
+* Il est souvent remontée par les utilisateurs de Kubernetes sur Azure que, lors d'une montée en charge, *créer de nouveaux noeuds (VMs) prenait du temps*.
+    ** Créer un nouveau noeud *correspond à instancier une nouvelle VM sur Azure*, ce qui prend plusieurs minutes et entraîne donc de la latence lorsque les utilisateurs veulent accéder à l'application.
+
+* Pour répondre à ce problème, il y a le "*Burst ACI*", dont voici le principe : 
+    ** En cas de montées en charge soudaines, plutôt que de créer de nouveaux noeuds dans le VMSS (dans le primary pool ou un autre pool), *la création de nouvelle instances de notre application va être déléguée à ACI*.
+        *** Rappel : Instancier une application à l'aide d'ACI est très rapide (~20 sec)
+    
+    ** Via le procédé de *virtual node*, en cas de soudaines montées en charge du cluster Kubernetes, on pourra déléguer au service ACI 
+    la création rapide de pods.
+        *** Le virtual node est une *fonctionnalité d'un cluster AKS* devant être activée.
+
+image:AZ-104_web-app-ACI-AKS_37.jpg[width=1000]
+
+.Terminologie Kubernetes
+[IMPORTANT]
+====
+* *Pools* : Groups of nodes with identical configurations
+* *Nodes* : Individual VMs running containerized applications
+* *Pods* : Single instance of an application. A pod can contain multiple containers.
+* *Deployment* : One or more identical pods managed by Kubernetes
+* *Manifest* : YAML file describing a deployment
+====
+
+* Sur le même cluster Kubernetes, sur le *même noeud*, il va être *possible d'instancier plusieurs versions de son application* (à raison d'1 pod par application) : +
+image:AZ-104_web-app-ACI-AKS_38.jpg[width=600]
+    ** Rappel : un des grands principes de la containerisation : les containers, et donc ici *les pods*, sont *isolés*.
+
+* Les intérêts de Kubernetes : 
+    ** sa *scalabilité*
+    ** son *isolation des ressources*
+    ** la *portabilité* et l'*interopérabilité* de la technologie (à savoir la conteneurisation)
+        *** Les containers peuvent être instanciés aussi bien sur de l'Ubuntu on-premise, de l'Azure ou un autre Cloud provider
+
+*DEMO*
+
+.Azure Container Registry
+image:AZ-104_web-app-ACI-AKS_39.jpg[width=800]
+
+* Cet ACR est mappé à un cluster Kubernetes
+image:AZ-104_web-app-ACI-AKS_40.jpg[width=1000]
+
+* A mon pool de nodes sont associés : une taille de noeud (taille de VM), un OS, et une version de Kubernetes
+image:AZ-104_web-app-ACI-AKS_41.jpg[width=1000]
+
+    ** A tout moment il est possible de changer la version (montée de version) du cluster Kubernetes : +
+    image:AZ-104_web-app-ACI-AKS_42.jpg[width=800]
+    image:AZ-104_web-app-ACI-AKS_43.jpg[width=800]
+    ** A partir de là, *les noeuds vont être mis à jour automatiquement*.
+
+* Regardons plus en détails ce qui se passe "sous le capot" lors de la création d'un cluster Kubernetes. +
+A sa création, un nouveau Resource Group est créé qui va contenir : +
+image:AZ-104_web-app-ACI-AKS_44.jpg[width=1000]
+
+    ** aks-agentpool-31433562-nsg : Un *Network Security Group* (NSG) pour filtrer les flux
+    ** aks-agentpool-31433562-routetable : des *UDR (User Defined Route)* donc des tables de routage (Route table) pour rediriger les requêtes aux bons endroits
+    ** aks-agentpool-93993853-vmss : le *Virtual Machine Scale Set* (VMSS) du pool de noeuds de notre cluster Kubernetes
+    ** aks-vnet-31433562 : les noeuds (VMs) du cluster ont besoin de fonctionner sur un *Virtual Network*
+    ** aksdemo-agentpool : les *identités managées* (Managed Identity)
+    ** kubernetes : le *load balancer* (Azure Load Balancer) de notre cluster
+
+.Conclusion de la session
+[NOTE]
+====
+* *AKS* : On va le choisir quand on veut scaler les instances de ses applications, un scaling horizontale au niveau des noeuds ou des pods
+* *ACI* : On va instancier son image Docker sur une service managé par Microsoft, NON scalable MAIS rapidement exécutable
+* *Web app* (App Service) : livrée avec un runtime (.Net, PHP, Java, etc.) et toujours liée à un Service Plan qui définit la taille (CPU, RAM) associée à ma ou mes web app ainsi que ses fonctionnalités.
+====
+
+==== Azure Container Apps (ACA)
+
+NOTE: ACA n'est pas été présenté au travers du cours de l'AZ-104 de Philippe, mais il a fait l'objet d'une vidéo à part : https://www.youtube.com/watch?v=p83wHKkYyZI +
+Philippe a été aidé par Thomas RANNOU, Cloud Solution Architect at Microsoft sur cette vidéo
+
+* *ACA* (Azure Container Apps) est un *service PaaS* qui vous permet d'*exécuter des microservices mais aussi des containers dans un monde serverless*.
+    ** C'est la définition d'ACA donnée par Microsoft : +
+    "Run modern apps and microservices using serverless containers. Build and deploy cloud-native apps at scale on a serverless compute platform."
+
+* ACA se présente comme une *alternative à AKS*, car même si AKS est un service managé, on a besoin de compétences système et réseau pour l'administrer. +
+De son côté, ACA nous permet de déployer des microservices containerisés dans Azure *sans avoir à gérer la même plomberie que pour AKS* (pas de gestion des noeuds, des UDR, des NSG, etc.). +
+image:AZ-104_web-app-ACI-AKS_45.jpg[width=600]
+
+    ** ACA permet d'exécuter des microservices et des applications conteneurisées sur une plateforme serverless
+        *** Rappel sur le serverless : ne pas avoir à se soucier de l'infrastructure à créer pour exécuter son code, tout est géré par Microsoft qui va à la volée mettre à disposition les ressources nécessaires au fonctionnement de votre application au quotidien.
+
+    ** Avec ACA, *pas besoin de sélectionner de runtime* ou de modèle de programmation
+        *** Contrairement au service PaaS wep app (Azure App Service), où à la création de votre application vous allez devoir sélectionner un runtime (Python, PHP, etc.), avec ACA pas besoin de sélectionner de runtime ou de modèle (paradygme) de programmation pour faire tourner votre application.
+
+    ** *Mise à l'échelle automatique* & *répartition du trafic*
+        *** ACA est livré nativement avec un *scaling horizontal* : lors d'une montée ou d'une baisse de charge, plus ou moins d'instances du service vont être automatiquement provisionnées par Microsoft
+
+    ** *Exécutions de plusieurs versions de votre application (de l'image de votre application)*
+        *** Avec ACA il est possible de rediriger le trafic entre plusieurs versions de votre application. +
+        Exemple : J'ai ma PROD qui tourne et une nouvelle version de celle-ci qui vient de sortir ; j'aimerais que 20% du trafic aille sur cette nouvelle version (pour la faire découvrir aux utilisateurs) et 80% reste sur la version actuelle.
+
+    ** *Prise en charge des registres public ou privé*
+        *** Pour déployer des applications sur ACA il est possible d'utiliser des registry publics comme Docker Hub ou des registry privées comme l'Azure Container Registry que vous avez déployée dans votre subscription Azure.
+
+4 grands types d'applications pour lesquels Microsoft conseille d'utiliser Azure Container Apps : 
+
+    * les services web ou les API web (déploiement de points de terminaison / endpoints d'API)
+    * les applications de type *batch* qui vont exécuter un traitement en arrière plan
+    * les applications qui vont réagir à des évènements (*event-driven*)
+    * les applications *microservices* déployées dans Azure
+
+*DEMO*
+
+* Thomas a commencé par déployer un ACR dans laquelle il a poussé une image Docker : 
+image:AZ-104_web-app-ACI-AKS_46.jpg[width=800]
+
+* Image appelée "appdemo", ici en version "v1" : +
+image:AZ-104_web-app-ACI-AKS_47.jpg[width=400]
+image:AZ-104_web-app-ACI-AKS_48.jpg[width=700]
+
+* Pour déployer sa Container App sur ACA il faut tout d'abord *provisionner un environnement*. +
+-> Cet "environnement" correspond à l'*isolation logique* dans laquelle vont être déployées les applications. 
+    ** Pour ce faire on utilise la commande : +
+    image:AZ-104_web-app-ACI-AKS_49.jpg[width=700]
++
+[source,shell]
+----
+az containerapp env create --name envcontainerapps --resource-group rg-demoaca --location northeurope
+----
+        *** L'environnement est ici nommé "envcontainerapps" et a été placé dans le Resource Group "rg-demoaca" dans la région "northeurope"
+
+* Une fois l'environnement prêt, on peux y déployer sa Container App avec la commande :
++
+[source,shell]
+----
+az containerapp create --name app --resource-group rg-demoaca --image acrdemocontainerapps.azurecr.io/appdemo:v1 environment envcontainerapps --registry-server acrdemocontainerapps.azurecr.io --registry-username acrdemocontainerapps --registry-password n1m0GvpX0nDkiz45oxnc30ntYE/1VNoB --ingress external --target-port 80 --cpu 0.5 --memory 1.0Gi
+----
+    ** L'image docker sur laquelle je vais baser ma Container App est "appdemo" en "v1" en provenance de mon ACR "acrdemocontainerapps.azurecr.io"
+    ** Il faut fournir les credentials pour se connecter à l'ACR via "registry-username" et "registry-password"
+    ** Via "--ingress external" j'indique que La Container App aura un endpoint public, elle aura donc une IP publique associée sur le port 80.
++
+.External and internal ingress (https://learn.microsoft.com/en-us/azure/container-apps/ingress-overview)
+[NOTE]
+====
+When you enable ingress, you can choose between two types of ingress:
+
+    * *External* : Accepts traffic from both the *public internet* and your *container app's internal environment*.
+    * *Internal* : Allows *only internal access* from within your container app's environment.
+====
+
+    ** Sont également associés à la Container App 0.5 CPU et 1 Go de RAM.
+
+* On peut ensuite vérifier que la Container App a bien été déployée dans le Resource Group : +
+image:AZ-104_web-app-ACI-AKS_50.jpg[width=1000]
+
+* Puis tester son bon fonctionnement à l'aide de son URL : +
+image:AZ-104_web-app-ACI-AKS_51.jpg[width=1000]
+
+* Fonctionnalité très intéressante d'ACA : la configuration de la *mise à l'échelle (scaling)* +
+image:AZ-104_web-app-ACI-AKS_52.jpg[width=1000]
+image:AZ-104_web-app-ACI-AKS_53.jpg[width=600]
+    ** On a la possibilité de *configurer de l'auto-scaling* en fonction de différents critères : +
+    image:AZ-104_web-app-ACI-AKS_54.jpg[width=800]
+        *** "mise à l'échelle HTTP" : le nombre de requêtes HTTP concurrentes
+        *** "File d'attente Azure" : la configuration du scaling sur un bus de messages
+        *** "Personnalisé" : une personnalisation à l'aide du composant *KEDA* permettant de configurer l'auto-scaling en fonction de la charge CPU, mémoire, du nombre de fichiers sur un storage account, etc.
+
+== AZ-104 EP10 : 20 questions type de la certification
+
+URL vidéo PHILIT : https://www.youtube.com/watch?v=A8Zrh5FSx-g&list=PLxf9spw2semSHqq8XvRaiT9HNWzO054MT
+
+* AZ-104 :
+    ** durée de l'épreuve : 120 min
+    ** durée de l'examen, le "vrai" de temps accordé à la réponse aux questions : 100 min
+        *** la diff de 20 min vient du temps alloué pour donner votre feedback, lire le contrat de Microsoft pour le passage de la certif, etc.
+    ** 700 points / 1000 nécessaire pour avoir la certification
+
+* Pour tester l'outil / le site de passage de la certification, il existe un site "officiel" de test : https://aka.ms/examdemo
+
+*20 QUESTIONS DE TESTS*
+
+1. *You would like to add a user who has a Microsoft account to your subscription. Which type of user account is this?*
+    ** Directory-Synchronized
+    ** Guest User ✅
+    ** Member
+
+    ** EXPLICATION : +
+    Un *Microsoft Account* est un *compte PERSONNEL* Microsoft pouvant être associé à un *mail PERSONNEL* Gmail, Hotmail, etc. +
+    Ce n'est donc PAS un compte professionnel, membre d'un tenant Azure. +
+    Et pour pouvoir ajouter un email personnel, afin qu'il ait accès à votre subscription Azure, il faut l'*INVITER* -> Guest account (Guest User)
+
+        *** Depuis une subscription Azure, dans "Access control (IAM)", je fais un "Add role assignment" : +
+        image:AZ-104_exam-questions_01.jpg[]
+        *** Là je vais définir le rôle de l'utilisateur sur ma subscription : +
+        image:AZ-104_exam-questions_02.jpg[]
+        *** Puis je vais pouvoir spécifier son mail, qui va pouvoir être professionnel ou personnel : +
+        image:AZ-104_exam-questions_03.jpg[]
+            **** Ici on indique un mail en "@gmail.com", donc un mail personnel, bien indiqué comme "Guest" et qui correspond à un utilisateur que je vais INVITER à accéder à ma subscription Azure.
+        *** Dans ce cas (pour un Guest), dans le tenant, dans la section "Users", je vais retrouver mon utilisateur avec un "User type = Guest" et une "Identities = *MicrosoftAccount*" +
+        image:AZ-104_exam-questions_04.jpg[]
+
+2. *Identify three differences from the following list between Azure Active Directory (AD) and Active Directory Domain Services (AD DS)*
+    ** Azure AD uses OAUTH 2.0 authentication ✅
+    ** Azure AD uses Kerberos authentication
+    ** There are no Organizational Units (OUs) or Group Policy Objects (GPOs) in Azure AD ✅
+    ** Azure AD uses HTTP and HTTPS communications ✅
+    ** Azure AD can be queried through LDAP
+
+    ** EXPLICATION : +
+    Active Directory Domain Services (AD DS) est ce que l'on appelle couramment l'"Active Directory on-premises".
+    ** Azure AD (Entra ID) est un service d'annuaire cloud plus moderne, conçu pour gérer les identités à grande échelle dans un environnement cloud, avec une approche plus centrée sur les utilisateurs et les groupes. +
+    -> Ce modèle est plus flexible et dynamique que le modèle hiérarchique des OUs, qui est plus adapté à la gestion des ressources informatiques sur site.
+        *** Les OUs et les GPOs n'existent pas sur un Azure AD.
+    
+    ** Pour pouvoir se connecter à un AD on-premises (AD DS), il faut utiliser le protocole Kerberos OU NTLM, alors que pour se connecter à un Azure AD, il faut utiliser les protocoles HTTP ou (mieux) HTTPS
+    ** Pour faire des requêtes sur un AD on-premises, on va utiliser le protocole LDAP, tandis que sur un Azure AD, ce sera OAuth 2.0 / OpenID Connect (OIDC)
+
+3. *You need to target policies and review spend budgets across several subscriptions you manage. What should you do ? Select one :* 
+    ** Create Azure policies
+    ** Create management groups ✅
+    ** Create resource groups
+
+    ** EXPLICATION : +
+    Rappel : Un Management Group est un conteneur qui contient des subscriptions Azure et qui permet d'en simplifier l'administration
+
+4. *How can you categorize resources and billing for different departments like IT and HR ?*
+    ** Create a subscription account rule
+    ** Create a billing group for each department
+    ** Create an Azure Policy. Create tags for each department. ✅
+
+    ** La meilleure est, via des Azure Policy, de déployer des tags sur nos ressources Azure.
+    ** Exemple : Dans le cas d'un VM Azure, je vais pouvoir utiliser des tags pour gérer qui manage cette VM et le coût associé à cette VM (à qui refacturer son coût) +
+    image:AZ-104_exam-questions_05.jpg[] +
+    "*Tags* are *name/value pairs* that enable you to *categorize resources* and *view consolidated billing* by applying the same tag to multiple resources and resource groups. Tag names are case insensitive, but tag values are case sensitive. +
+    Do not enter names or values that could make your resources less secure or that contain personal/sensitive information because tag data will be replicated globally."
+
+    ** Ici, j'ai créé manuellement 2 tags sur ma ressource (ma VM), mais je peux également utiliser une *Azure Policy* qui va permettre le *déploiement automatisé de tags sur nos ressources Azure* : 
+    image:AZ-104_exam-questions_06.jpg[]
+        *** La Policy "Require a tag and its value on resources" va forcer l'application d'un tag sur nos ressources Azure. +
+        Quand l'utilisateur créera la ressource automatiquement on lui demandera pour qu'il puisse la créer de définir un tag sur par exemple qui va manager cette ressource et le coût associé à celle-ci.
+
+5. *How can your Manager be notified whenever you are half-way to spending the money allocated for cloud services?*
+    ** Create an Azure reservation
+    ** Create a management group
+    ** Create a budget and a spending threshold ✅ 
+
+    ** EXPLICATION : +
+    Créer un budget et définir une limite de budget : +
+    image:AZ-104_exam-questions_07.jpg[]
+    image:AZ-104_exam-questions_08.jpg[]
+    image:AZ-104_exam-questions_09.jpg[]
+
+TO BE COMPLETED
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
