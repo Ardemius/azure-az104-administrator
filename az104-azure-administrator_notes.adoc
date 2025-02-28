@@ -353,14 +353,14 @@ Cette NIC primary va surtout *servir pour tout ce qui est routage*, pour *"avoir
 
 * Les *NSG* sont dotés de *règles de filtrage par défaut*, *classées par priorité* et que l'*on ne peut pas supprimer* : 
 
-    ** *Flux entrants* : 
+    ** *Flux entrants* (inbound security rules) : 
         *** prio 65000 - "AllowVnetInBound" : toutes les communications au sein d'un VNet entre les subnets sont autorisées
         *** prio 65001 - "AllowAzureLoadBalancerInBound" : un load balancer Azure doit pouvoir accéder aux VMs qui sont dans un subnet (logique, c'est le principe d'un load balancer)
         *** prio 65500 - "DenyAllInBound" : "on refuse tout"
 
     ** -> On peut pas supprimer ces règles MAIS on peut en créer d'autres avec une plus forte priorité (priorité plus forte = nombre plus petit)
 
-    ** *Flux sortants* : 
+    ** *Flux sortants* (outbound security rules) : 
         *** On retrouve 2 règles similaires aux flux entrants : "AllowVnetOutBound" et "DenyAllOutBound"
         *** et 1 nouvelle règle "AllowInternetOutbound" en prio 65001 : le trafic sortant sur une VM Azure est autorisé vers internet
             **** Exemple : si on lance un navigateur sur une VM Azure et qu'on tape www.google.fr, on pourra s'y connecter via Internet
@@ -557,7 +557,7 @@ They are particularly significant in *constructing demilitarized zones (DMZ)* in
 
 * NVAs in Azure *scrutinize all incoming and outgoing traffic*, *permitting only the traffic that complies with predefined rules*, thus ensuring a secure network boundary.
 
--> The main purpose of an Azure NVA is to *handle and secure network traffic* in Azure cloud by doing *routing*, *firewall*, *load balancing*, *intrusion detection*, etc.)
+-> The main purpose of an Azure NVA is to *handle and secure network traffic* in Azure cloud by doing *routing*, *firewall*, *load balancing*, *intrusion detection*, etc.
 
 Ressources : 
 
@@ -741,7 +741,7 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=cuWs3E1Zmm8&list=PLxf9spw2se
 * *Plusieurs composants* sont requis pour créer une *connexion VPN Site à Site* avec Azure : 
 
     ** 1️⃣ le plus important, un *VNet* Azure : 
-        *** un composant spécifique va être attribué à ce VNET, le *Gateway subnet* : ce subnet va être dédié à *recevoir les connexions distantes depuis vers VPN on-premises*.
+        *** un composant spécifique va être attribué à ce VNET, le *Gateway subnet* : ce subnet va être dédié à *recevoir les connexions distantes depuis et vers VPN on-premises*.
         *** Ce VNET doit être conforme à la RFC 1918 "Adress Allocation for Private Internets" : https://datatracker.ietf.org/doc/html/rfc1918[]
         *** L'espace d'adressage de ce VNet doit être différent de celui de votre espace d'adressage on-premises
     
@@ -894,7 +894,6 @@ NOTE: Philippe parle également du "VNet to VNet" comme d'une connexion VPN Site
 -> Néanmoins, certains clients préfère utiliser une *vieille technologie* présente sur Azure : le VNet to VNet
 
 image::AZ-104_VPN-S2S-VNet-to-VNet-PRA_05.jpg[]
-
 
 * Le VNet to VNet est une fonctionnalité permettant de raccorder 2 VNet entre eux via une liaison VPN de type Site à Site.
 
@@ -3270,17 +3269,17 @@ Prévoir un *coût de ~100€ / mois pour 100 connexion simultanées*.
     image:AZ-104_virtual-machine_44.jpg[width=1000]
 
     * C'est dans ce cas qu'on va pouvoir utiliser le Bastion : +
-    image:AZ-104_virtual-machine_45.jpg[width=600]
+    image:AZ-104_virtual-machine_45.jpg[width=800]
         ** Le Bastion nécessite un compte pour accéder à la VM : +
-        image:AZ-104_virtual-machine_46.jpg[width=600]
+        image:AZ-104_virtual-machine_46.jpg[width=800]
     
     * Après un "connect" en utilisant le Bastion, un nouvel onglet va être ouvert dans le navigateur, qui va héberger une nouvelle session sur la VM (la logique est d'accéder directement dans le navigateur à la VM)
         ** 1ere chose : on va vous proposer de mapper le presse-papiers, pour copier du texte et des images sur la VM : +
-        image:AZ-104_virtual-machine_47.jpg[width=600]
+        image:AZ-104_virtual-machine_47.jpg[width=800]
 
     * Dans le menu "Sessions" du Bastion on va retrouver les sessions ouvertes : +
-    image:AZ-104_virtual-machine_48.jpg[width=600]
-    image:AZ-104_virtual-machine_49.jpg[width=600]
+    image:AZ-104_virtual-machine_48.jpg[width=1000]
+    image:AZ-104_virtual-machine_49.jpg[width=1000]
 
     * Le menu "Configuration" permet de : 
         ** scaler le Bastion, via le choix du Tier "Standard"
@@ -3729,6 +3728,7 @@ image:AZ-104_web-app-ACI-AKS_44.jpg[width=1000]
     ** aks-agentpool-93993853-vmss : le *Virtual Machine Scale Set* (VMSS) du pool de noeuds de notre cluster Kubernetes
     ** aks-vnet-31433562 : les noeuds (VMs) du cluster ont besoin de fonctionner sur un *Virtual Network*
     ** aksdemo-agentpool : les *identités managées* (Managed Identity)
+        *** Une Managed Identity est essentiellement un Service Principal spécial dans Microsoft Entra ID, mais entièrement géré par Azure.
     ** kubernetes : le *load balancer* (Azure Load Balancer) de notre cluster
 
 .Conclusion de la session
@@ -3849,7 +3849,7 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=A8Zrh5FSx-g&list=PLxf9spw2se
     ** Directory-Synchronized
     ** Guest User ✅
     ** Member
-
+{lb}
     ** EXPLICATION : +
     Un *Microsoft Account* est un *compte PERSONNEL* Microsoft pouvant être associé à un *mail PERSONNEL* Gmail, Hotmail, etc. +
     Ce n'est donc PAS un compte professionnel, membre d'un tenant Azure. +
@@ -3871,7 +3871,7 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=A8Zrh5FSx-g&list=PLxf9spw2se
     ** There are no Organizational Units (OUs) or Group Policy Objects (GPOs) in Azure AD ✅
     ** Azure AD uses HTTP and HTTPS communications ✅
     ** Azure AD can be queried through LDAP
-
+{lb}
     ** EXPLICATION : +
     Active Directory Domain Services (AD DS) est ce que l'on appelle couramment l'"Active Directory on-premises".
     ** Azure AD (Entra ID) est un service d'annuaire cloud plus moderne, conçu pour gérer les identités à grande échelle dans un environnement cloud, avec une approche plus centrée sur les utilisateurs et les groupes. +
@@ -3885,7 +3885,7 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=A8Zrh5FSx-g&list=PLxf9spw2se
     ** Create Azure policies
     ** Create management groups ✅
     ** Create resource groups
-
+{lb}
     ** EXPLICATION : +
     Rappel : Un Management Group est un conteneur qui contient des subscriptions Azure et qui permet d'en simplifier l'administration
 
@@ -3893,8 +3893,9 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=A8Zrh5FSx-g&list=PLxf9spw2se
     ** Create a subscription account rule
     ** Create a billing group for each department
     ** Create an Azure Policy. Create tags for each department. ✅
-
-    ** La meilleure est, via des Azure Policy, de déployer des tags sur nos ressources Azure.
+{lb}
+    ** EXPLICATION : +
+    La meilleure réponse est, via des Azure Policy, de déployer des tags sur nos ressources Azure.
     ** Exemple : Dans le cas d'un VM Azure, je vais pouvoir utiliser des tags pour gérer qui manage cette VM et le coût associé à cette VM (à qui refacturer son coût) +
     image:AZ-104_exam-questions_05.jpg[] +
     "*Tags* are *name/value pairs* that enable you to *categorize resources* and *view consolidated billing* by applying the same tag to multiple resources and resource groups. Tag names are case insensitive, but tag values are case sensitive. +
@@ -3909,57 +3910,208 @@ URL vidéo PHILIT : https://www.youtube.com/watch?v=A8Zrh5FSx-g&list=PLxf9spw2se
     ** Create an Azure reservation
     ** Create a management group
     ** Create a budget and a spending threshold ✅ 
-
+{lb}
     ** EXPLICATION : +
-    Créer un budget et définir une limite de budget : +
+    Créer un budget, définir une limite de budget et créer une alerte mail au manager : +
     image:AZ-104_exam-questions_07.jpg[]
     image:AZ-104_exam-questions_08.jpg[]
     image:AZ-104_exam-questions_09.jpg[]
 
-TO BE COMPLETED
+6. *You notice that you have reached the limit for virtual machines in the US East region. Which of the following provides the easiest solution ?*
+    ** Request support increase your limit ✅
+    ** Change your subscription plan
+    ** Resize your virtual machines to handle larger workloads
+    ** Add another resource group
+{lb}
+    ** EXPLICATION : +
+    Il faut faire une demande d'augmentation de quota au support Azure.
+    ** Pour ce faire, via le portail Azure, dans le menu "Usage + quotas", on va faire une *Request quota increase* : +
+    image:AZ-104_exam-questions_10.jpg[]
 
+7. *You have a new Azure subscription and need to move resources to that subscription. Which of the following resources cannot be moved ?*
+    ** Virtual machine
+    ** VPN Gateway ✅ 
+    ** Key Vault
+    ** Storage account
+{lb}
+    ** EXPLICATION : 
++
+NOTE: L'Azure VPN Gateway semble pouvoir également être appelée "*VNG*" (pour Virtual Network Gateway)
 
+    ** Pour information, les ressources d'un RG Azure peuvent être déplacées : 
+        *** d'une région A vers une région B
+        *** entre 2 abonnements (subscritions) Azure différents
+        *** entre 2 RG différents
+    ** 🔥MAIS, *toutes les ressources Azure ne sont pas déplaçables* ! 🔥 +
+        *** L'Azure VPN Gateway ("VNG") liaison VPN avec votre réseau on-premises n'est pas déplaçable
+        *** Un circuit ExpressRoute
 
+    ** Possibilités de déplacement des ressources d'un RG Azure : +
+    image:AZ-104_exam-questions_11.jpg[]
+    image:AZ-104_exam-questions_12.jpg[]
 
+8. *Which of the following is a default inbound security rule ? Select one.*
+    ** Allow inbound coming from any VM to any other VM within the subnet
+    ** Allow inbound coming from any VM to any other VM within the virtual network ✅
+    ** Allow traffic from any external source to any of the VMs
+{lb}
+    ** EXPLICATION : +
+    Il est ici question des règles de sécurité entrantes des NSG (Network Security Group). +
+    Pour 1 NSG, il existe 3 règles de sécurité par défaut pour les flux entrants (inbound security rules) : +
+    image:AZ-104_exam-questions_13.jpg[]
 
+9. *You have a VM with two NICs, NIC1 (subnet 1) and NIC2 (subnet 2). You plan enable direct communication from the internet to TCP port 443 for NIC2 and would like to maintain existing communication across both subnets. What should you do ?*
+    ** Create an inbound security rule for TCP port 443
+    ** Associate a public IP address to NIC2 and create an inbound security rule for TCP port 443 ✅
+    ** Remove the private IP address from NIC2 and then assign a public IP address to it. Then, create an inbound security rule
+{lb}
+    ** EXPLICATION : +
+    Rappel : Une carte réseau (une NIC) a toujours une IP privée et potentiellement (facultativement) une IP publique. +
+    MAIS, dans tous les cas, une NIC sans IP privée, ça n'existe PAS.
+        *** Donc déjà la réponse 3 n'était pas possible
+    ** Pour connaître la carte réseau (NIC) associée à mon NSG : +
+    image:AZ-104_exam-questions_14.jpg[]
+    ** Puis, pour associer une IP publique à ma NIC, je passe par la fonctionnalité "Associate" : +
+    image:AZ-104_exam-questions_15.jpg[]
+    ** Une fois l'IP publique associée à ma NIC, je vais sur son NSG et j'ajoute une nouvelle règle de trafic entrant sur le port 443
 
+10. *You want to connect different VNets in the same region as well as different regions and decide to use VNet peering to accomplish this. Which of the following statements is not true about VNet peering ?*
 
+    ** The virtual networks can only exist in the same azure cloud region ✅
+    ** Peering is easy to configure and manage, requiring little to no downtime
+    ** Network traffic between peered virtual networks is private
+{lb}
+    ** EXPLICATION : +
+    On peut très bien peerer des VNets existant dans différentes régions.
+    ** Dans un réseau virtuel (VNet), je vais dans Peerings, je fais "Add" : +
+    image:AZ-104_exam-questions_16.jpg[]
+    ** L'autre VNet que je vais indiquer dans mon peering peut se trouver dans une autre région que celle de l'actuel VNet
 
+11. *You are configuring VNet Peering across two Azure two virtual networks, VNET1 and VNET2. You are configuring the VPN Gateways. You want VNET2 to be able to use to VNET1's gateway to get to resources outside the peering. What should you do ?* 
 
+    ** Select allow gateway transit on VNET1 and use remote gateways on VNET2 ✅
+    ** Select allow gateway transit on VNET2 and use remote gateways on VNET1
+    ** Select allow gateway transit and use remote gateways on both VNET1 and VNET2
+{lb}
+    ** *EXPLICATION* : +
+    Dans cet exemple, on a un peering entre 2 VNet, et le VNet1 a une connexion VPN vers le réseau on-premises. +
+    Le but est que le VNet2 utilise la connexion VPN du VNet1 pour accéder au réseau on-premises.
+    ** Pour faire cela, dans la déclaration de mon peering : 
+        *** Pour VNet1, je dois autoriser le partage de ma VNG (ma passerelle VPN) : +
+        "Virtual network gateway or Route Server" : Use this virtual network's gateway or Route Server
+        *** Pour VNet2, je dois bénéficier de la passerelle VPN de VNet1 : +
+        "Virtual network gateway or Route Server" : Use the remote virtual network's gateway or Route Server (pour utiliser la VNG de VNet1)
 
+12. *When creating user-defined routes, you can specify any of these next hop types, except ?*
 
+    ** Load Balancer ✅
+    ** Virtual Appliance
+    ** Internet
+{lb}
+    ** *EXPLICATION* : +
+    Quand on crée des UDR dans une table de routage (route table à chercher dans le portail Azure), on voit que le next hop type peut être : 
+    image:AZ-104_exam-questions_17.jpg[]
 
+        *** Virtual network gateway
+        *** Virtual network
+        *** Internet
+        *** Virtual appliance
+        *** None
+    ** -> Mais PAS Load Balancer
 
+13. Your company wants to redirect Internet traffic to your company's on-premises servers for packet inspection. Which of the following is not used for this ?
 
+    ** User Defined Routes
+    ** System Routes ✅
+    ** Forced Tunneling
+{lb}
+    ** *EXPLICATION* : +
+    *Tunneling forcé* : Par principe, dans Azure, toutes les VMs peuvent sortir sur Internet : dans le NSG et dans les system routes, il y a une possibilité pour les VMs de sortir vers Internet.
+    Il y a la route 0.0.0.0/0 de disponible dans les System Routes et un NSG laisse sortir le trafic sortant.
+    Le tunneling forcé consiste à permettre à des VMs Azure, quand elles veulent sortir sur Internet, de rediriger le flux de sortie Internet, via la connexion VPN, vers un périphérique on-premises, à savoir un firewall (F5, Fortinet, etc.) qui va permettre ou pas de sortir sur Internet.
 
+    ** Documentation Azure associée au *forced tunneling* : https://learn.microsoft.com/en-us/azure/vpn-gateway/about-site-to-site-tunneling +
+    image:AZ-104_exam-questions_18.jpg[width=500]
+        *** On voit sur ce schéma que, pour sortir sur Internet, les 2 sous-réseaux (subnets) "backend" et "Mid-Tier" vont devoir envoyer leurs requêtes, par la liaison VPN site à site (S2S VPNs), à un équipement on-premises. +
+        Pour y arriver, il va falloir : 
+            **** *configurer le tunneling forcé* sur l'équiment
+            **** *utiliser les UDR* afin qu'elles gèrent à la place des system routes la route 0.0.0.0/0 et ainsi pourvoir renvoyer le flux vers la VNG (Virtual Network Gateway) qui contient la connexion (connexion VPN) entre le réseau on-premises et le VNet Azure.
 
+14. A Company has a web site and plans to move it to Azure in a single region. 10 VMs are prepared to handle requests and traffic should be distributed across the VMs. Solution should minimize complexity and ongoing costs. What should you do ? 
 
+    ** Azure Load Balancer ✅
+    ** Azure Traffic Manager
+    ** Azure Application Gateway 
+{lb}
+    ** *EXPLICATION* :
+        *** L'Application Gateway fonctionne sur la couche 7 (HTTP et HTTPS), cela pourrait correspondre.
+        *** L'Azure Traffic Manager fonctionne avec le protocole DNS qui est associé avec la couche 7 "application" du modèle OSI.
+        *** L'Azure Load Balancer fonctionne avec la *couche 4 du modèle OSI*, la couche transport, et travaille avec les protocoles *TCP* et *UDP*, donc on peut faire du HTTP dessus.
+        Mais surtout, il a une version "Basic" *gratuite*, alors que l'Application Gateway est dans tous les cas payant. +
+        -> Pour *minimiser les coûts*, la bonne réponse est donc l'*Azure Load Balancer* en version "Basic".
+            **** Attention ! En choisissant une version gratuite pour l'Azure Load Balancer il n'y aura pas de SLA associé, il n'y aura pas de gestion d'AZ, il y aura des limitations en termes de backend pools, en termes de sécurité. +
+            Néanmoins, dans le cas de l'exemple, la version "Basic" va faire le job.
 
+15. Which of the following replicates your data to a secondary region, maintains six copies of your data, and always available for read requests ?
 
+    ** Locally-redundant storage
+    ** Read-access geo-redundant storage ✅
+    ** Zone-redundant storage
 
+16. Which of these changes between access tiers will happen immediately ?
 
+    ** Hot to Cool ✅
+    ** Archive to Hot
+    ** Archive to Cool
+{lb}
+    ** *EXPLICATION* : +
+    Sur un Storage Accocunt il y a 3 niveaux d'accès aux données : Hot (accès fréquent), Cool (accès 1 fois par mois) et Archive (où l'on s'engage pendant 6 mois à ne pas toucher à la donnée)
+        *** Le passage d'un Hot à Cool ou de Cool à Hot est très rapide
+        *** Mais le passage de Archive à un autre niveau d'accès implique une *réhydratation de la donnée* qui peut prendre plusieurs heures pour quelques centaines de Mo
 
+17. Your organization has a security policy that prohibits exposing SSH ports to the outside world. You need to connect to an Azure Linux virtual machine to install software. What should you do ?
 
+    * Configure the Bastion service ✅
+    * Create a custom script extension
+    * Configure a Guest configuration on the virtual machine
+{lb}
+    ** *EXPLICATION* : +
+    image:AZ-104_exam-questions_19.jpg[]
+        *** Le Bastion a une IP publique et il va permettre à une VM, qui bloque le port SSH ou RDP depuis des réseaux distants type Internet, de passer par l'IP publique du Bastion pour accéder à cette VM.
+        *** En plus, le Bastion est capable d'encapsuler le flux en TLS, donc en HTTPS dans le navigateur.
 
+        *** Exemple : Pour une VM Windows, si le port RDP est bloqué, avec un Bastion je vais pouvoir faire un "Connect" / "Bastion" pour me connecter à la VM VIA le Bastion : +
+        image:AZ-104_exam-questions_20.jpg[]
+        image:AZ-104_exam-questions_21.jpg[]
 
+18. What is the effect of the default network security settings for a new virtual machine ?
 
+    ** Neither outbound nor inbound requests are allowed
+    ** There are no restrictions: all outbound and inbound requests are allowed
+    ** Outbound request is allowed. Inbound traffic is only allowed from within the virtual network ✅
+{lb}
+    ** *EXPLICATION* : +
+    On le voit via les Inbound port rules et Outbound port rules de la NIC de la VM, par défaut toutes les requêtes sortantes sont permises, mais seules les entrantes issues du même VNet que la VM le sont : +
+    image:AZ-104_exam-questions_22.jpg[]
+    image:AZ-104_exam-questions_23.jpg[]
 
+19. You need to backup files and folders from an on-premise server to Azure. Which of these steps would you do first ?
 
+    ** Download, install and register the backup agent (MARS)
+    ** Create a recovery services vault ✅
+    ** Back up files and folders
+{lb}
+    ** *EXPLICATION* : +
+    Même si le backup de fichiers et répertoires depuis une machine Windows vers Azure est bien opéré par l'agent MARS, ce dernier va sauvegarder ces derniers dans un RSV qui doit donc être créé en 1er.
 
+20. You have created the Recovery Vault service. Now you decide to change the storage replication type to locally redundant. In which situations can you change the storage replication type ?
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+    ** You cannot change this setting at any time
+    ** You can change this setting, but only before a Recovery Vault service starts providing protection for items ✅
+    ** You can change this setting at any time
+{lb}
+    ** *EXPLICATION* : +
+    On ne peut changer le type de réplication du Storage Account associé au RSV QUE si on n'a PAS déjà sauvegardé quelque chose dans le RSV.
 
 
 
